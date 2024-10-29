@@ -1,8 +1,8 @@
 import Layout from "../components/common/Layout";
 
-const Etc = ({ name, imgUrl }) => {
+const Etc = ({ name, age, imgUrl }) => {
   return (
-    <Layout name={name} imgUrl={imgUrl}>
+    <Layout name={name} age={age} imgUrl={imgUrl}>
       <div>문진표 작성하는 곳입니다</div>
     </Layout>
   );
