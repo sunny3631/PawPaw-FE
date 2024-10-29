@@ -1,9 +1,12 @@
 import Layout from "../components/common/Layout";
+import MedicalHistory from "../components/medicalHistory/MedicalHistroy";
+import VaccineDate from "../components/vaccine/VaccineDate";
 
-const DashBoard = ({ name, imgUrl }) => {
+const DashBoard = ({ name, age, imgUrl }) => {
   return (
-    <Layout name={name} imgUrl={imgUrl}>
-      레이아웃 내용물이 들어가야 함.
+    <Layout name={name} age={age} imgUrl={imgUrl}>
+      <VaccineDate />
+      <MedicalHistory />
     </Layout>
   );
 };
