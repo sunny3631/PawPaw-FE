@@ -3,18 +3,28 @@ import MainPage from "./pages/MainPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import Login from "./pages/Login";
+import GlobalStyles from "./styles/GlobalStyle";
+import SelectChild from "./pages/SelectChild";
+import AddChild from "./pages/AddChild";
+import SynchronizationChild from "./pages/SynchronizationChild";
 
 function App() {
   return (
-    <RecoilRoot>
-      {/* <CharacterCounter /> */}
-      <Router>
-        <Routes>
-          <Route path="/" element={<MainPage />} />
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </Router>
-    </RecoilRoot>
+    <>
+      <GlobalStyles />
+      <RecoilRoot>
+        {/* <CharacterCounter /> */}
+        <Router>
+          <Routes>
+            <Route path="/" element={<MainPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/select" element={<SelectChild />} />
+            <Route path="/add" element={<AddChild />} />
+            <Route path="/synchronization" element={<SynchronizationChild />} />
+          </Routes>
+        </Router>
+      </RecoilRoot>
+    </>
   );
 }
 export default App;
