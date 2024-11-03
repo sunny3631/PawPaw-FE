@@ -2,6 +2,7 @@ import styled from "styled-components";
 import ConnectWallet from "../components/login/ConnectWallet";
 import useWallet from "../hooks/login/useWallet";
 import { useNavigate } from "react-router-dom";
+import { userAuth } from "../api/login";
 
 const Login = () => {
   const { connectWallet, walletAddress } = useWallet();
@@ -10,9 +11,21 @@ const Login = () => {
   const onClickWallet = async () => {
     const isConnected = await connectWallet();
     if (isConnected) {
-      console.log("성장적으로 연결되었습니다.");
-      console.log("사용자 메타마스크 주소 : ", walletAddress);
-      navigate("/select");
+      try {
+        const response = await userAuth.login({ address: walletAddress });
+        if (response.data.isSuccess) {
+          const { accessToken, refreshToken } = response.data.result;
+
+          localStorage.setItem("accessToken", accessToken);
+          localStorage.setItem("refreshToken", refreshToken);
+
+          navigate("/select");
+        } else {
+          console.log("로그인 실패: ", response.data.message);
+        }
+      } catch (error) {
+        console.error("로그인 요청 중 오류 발생: ", error);
+      }
     } else {
       alert("메타마스크와 연결이 되지 않습니다.");
     }
