@@ -1,6 +1,5 @@
 import { useState } from "react";
 import styled from "styled-components";
-import FaPaw from "../assets/icons/foot.svg";
 import Left from "../assets/image/leftBackground.svg";
 import Right from "../assets/image/rightBackground.svg";
 import { useNavigate } from "react-router-dom";
@@ -14,32 +13,6 @@ const AddChild = () => {
     weight: "",
   });
   const navigate = useNavigate();
-
-  const vaccineNames = [
-    "디프테리아",
-    "폴리오",
-    "백일해",
-    "홍역",
-    "파상풍",
-    "결핵",
-    "B형간염",
-    "유행성이하선염",
-    "풍진",
-    "수두",
-    "일본뇌염",
-    "B형헤모필루스인플루엔자",
-    "폐렴구균",
-    "인플루엔자",
-    "A형간염",
-    "사람유두종바이러스",
-    "장티푸스",
-    "신증후군출혈열",
-    "그룹 A형 로타바이러스 감염증",
-  ];
-
-  const [selectedVaccines, setSelectedVaccines] = useState(
-    vaccineNames.reduce((acc, vaccine) => ({ ...acc, [vaccine]: false }), {})
-  );
 
   const [errors, setErrors] = useState({});
 
@@ -69,15 +42,8 @@ const AddChild = () => {
     }
   };
 
-  const handleVaccineChange = (vaccine) => {
-    setSelectedVaccines((prev) => ({
-      ...prev,
-      [vaccine]: !prev[vaccine],
-    }));
-  };
-
   return (
-    <Container step={step}>
+    <Container>
       <div
         style={{
           width: "100%",
@@ -106,7 +72,7 @@ const AddChild = () => {
           alt=""
         />
       </div>
-      <FormTitle>{step === 1 ? "아이 기본 정보" : "예방접종 이력"}</FormTitle>
+      <FormTitle>{step === 1 ? "아이 기본 정보" : "백신 동기화"}</FormTitle>
 
       {step === 1 ? (
         <>
@@ -161,48 +127,23 @@ const AddChild = () => {
           </NextButton>
         </>
       ) : (
-        <>
-          {" "}
-          <VaccineList>
-            {vaccineNames.map((vaccine) => (
-              <RoundedBox
-                key={vaccine}
-                hasIcon={selectedVaccines[vaccine]}
-                onClick={() => handleVaccineChange(vaccine)}
-                label={vaccine}
-              />
-            ))}
-          </VaccineList>
-          <NextButton
-            step={step}
-            onClick={() => {
-              navigate("/select");
-            }}
-          >
-            해당사항 체크완료
+        <div>
+          <NextButton onClick={() => navigate("/synchronizationVaccination")}>
+            동기화 할래요.
           </NextButton>
-        </>
+          <NextButton onClick={() => navigate("/dashboard")}>
+            동기화 안할래요.
+          </NextButton>
+        </div>
       )}
     </Container>
-  );
-};
-
-// RoundedBox Component
-const RoundedBox = ({ hasIcon, onClick, label }) => {
-  return (
-    <RoundedBoxContainer onClick={onClick}>
-      <IconContainer>
-        {!hasIcon ? "" : <img src={FaPaw} alt="" color="#4f2304" size={24} />}
-      </IconContainer>
-      <Label>{label}</Label>
-    </RoundedBoxContainer>
   );
 };
 
 const Container = styled.div`
   background-color: #f9d49b;
   width: 100%;
-  height: ${({ step }) => (step === 1 ? "100vh" : "100%")};
+  height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -226,59 +167,6 @@ const FormContainer = styled.div`
   justify-content: center;
   align-items: start;
   gap: 10px;
-`;
-
-const VaccineList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  height: 100%;
-  justify-content: center;
-  align-items: center;
-
-  &::before {
-    content: "";
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    border-top: 2px dashed #ffffff; /* 점선 스타일 */
-  }
-
-  /* 아래쪽 점선 */
-  &::after {
-    content: "";
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    border-top: 2px dashed #ffffff; /* 점선 스타일 */
-  }
-`;
-
-const RoundedBoxContainer = styled.div`
-  display: flex;
-  align-items: center;
-  width: 275px;
-  height: 60px;
-  background-color: #fff7e4;
-  border-radius: 30px;
-  border: 1px solid #f4c784;
-  padding: 10px;
-  box-sizing: border-box;
-  cursor: pointer;
-`;
-
-const IconContainer = styled.div`
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background-color: #fff;
-  margin-right: 10px;
 `;
 
 const Label = styled.label`

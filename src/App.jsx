@@ -7,6 +7,7 @@ import GlobalStyles from "./styles/GlobalStyle";
 import SelectChild from "./pages/SelectChild";
 import AddChild from "./pages/AddChild";
 import SynchronizationChild from "./pages/SynchronizationChild";
+import SynchronizationVaccination from "./pages/SynchronizationVaccination";
 
 function App() {
   return (
@@ -21,6 +22,10 @@ function App() {
             <Route path="/select" element={<SelectChild />} />
             <Route path="/add" element={<AddChild />} />
             <Route path="/synchronization" element={<SynchronizationChild />} />
+            <Route
+              path="/synchronizationVaccination"
+              element={<SynchronizationVaccination />}
+            />
           </Routes>
         </Router>
       </RecoilRoot>
