@@ -1,32 +1,27 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import defaultImage from "../assets/image/defaultImage.svg";
 import addImage from "../assets/image/addImage.svg";
 import { useNavigate } from "react-router-dom";
+import { useGetChild } from "../hooks/child/useGetChild";
 
 const SelectChild = () => {
-  // 메타마스크와의 연결을 확인하고 만약 연결되어 있지 않다면 처음으로 돌아가도록
-
-  // 정보를 가져오는 로직이 추가 되어야 함.
-  const childrens = [
-    {
-      name: "땡땡이",
-      address: "",
-      imgUrl: "", // if url is empty, use default image
-    },
-    {
-      name: "땡땡이",
-      address: "",
-      imgUrl: "", // if url is empty, use default image
-    },
-    {
-      name: "땡땡이",
-      address: "",
-      imgUrl: "", // if url is empty, use default image
-    },
-  ];
-
+  const [children, setChildren] = useState([]);
+  const { getChildInformation } = useGetChild();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchChildrenData = async () => {
+      try {
+        const childData = await getChildInformation();
+        setChildren(Array.isArray(childData) ? childData : []);
+      } catch (error) {
+        console.error("Failed to fetch children data:", error);
+      }
+    };
+
+    fetchChildrenData();
+  }, [getChildInformation]);
 
   return (
     <Container>
@@ -43,7 +38,7 @@ const SelectChild = () => {
       <SelectContainer>
         <Title>아이의 프로필을 선택해주세요</Title>
         <GridContainer>
-          {childrens.map((child, index) => (
+          {children.map((child, index) => (
             // 누르게 되면 자식의 대시보드로 넘어가도록 개발이 되어야 함.
             // 자식들의 주소를 활용하여 대시보드에 접근
             // 만약 다른 부모들이 자식의 데이터에 접근을 하지 못하도록 함.
