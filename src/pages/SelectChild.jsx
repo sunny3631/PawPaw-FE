@@ -3,25 +3,47 @@ import styled from "styled-components";
 import defaultImage from "../assets/image/defaultImage.svg";
 import addImage from "../assets/image/addImage.svg";
 import { useNavigate } from "react-router-dom";
-import { useGetChild } from "../hooks/child/useGetChild";
+import ParentChildRelationshipABI from "../abi/ParentChildRelationshipWithMeta.json";
+import { ethers } from "ethers";
 
 const SelectChild = () => {
   const [children, setChildren] = useState([]);
-  const { getChildInformation } = useGetChild();
   const navigate = useNavigate();
+
+  const getChildInformation = async () => {
+    if (!window.ethereum) {
+      throw new Error("METAMask not install");
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    // MetaMask 계정 연결 요청
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+
+    const contract = new ethers.Contract(
+      process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
+      ParentChildRelationshipABI.abi,
+      signer // provider 대신 signer 사용
+    );
+
+    const children = await contract.returnChildInformation();
+
+    return children;
+  };
 
   useEffect(() => {
     const fetchChildrenData = async () => {
       try {
         const childData = await getChildInformation();
         setChildren(Array.isArray(childData) ? childData : []);
+        console.log(childData);
       } catch (error) {
         console.error("Failed to fetch children data:", error);
       }
     };
 
     fetchChildrenData();
-  }, [getChildInformation]);
+  }, []);
 
   return (
     <Container>

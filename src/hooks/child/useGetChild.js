@@ -1,39 +1,24 @@
-import { useEffect, useState, useCallback } from "react";
-import { setupContract } from "../../utils/ethereum";
+import { ethers } from "ethers";
+
+import ParentChildRelationshipABI from "../../abi/ParentChildRelationshipWithMeta.json";
 
 export const useGetChild = () => {
-  const [contract, setContract] = useState(null);
-  const [provider, setProvider] = useState(null);
-
-  useEffect(() => {
-    const initContract = async () => {
-      try {
-        const { provider, contract } = await setupContract();
-        setProvider(provider);
-        setContract(contract);
-      } catch (error) {
-        console.error("Contract initialization error:", error);
-      }
-    };
-
-    initContract();
-  }, []);
-
-  const getChildInformation = useCallback(async () => {
-    if (!contract) return null;
-
-    try {
-      const data = await contract.returnChildInformation();
-      return data;
-    } catch (error) {
-      console.error("Failed to fetch child information:", error);
-      return null;
+  const getChildInformation = async () => {
+    if (!window.ethereum) {
+      throw new Error("METAMask not install");
     }
-  }, [contract]);
 
-  return {
-    getChildInformation,
-    contract,
-    provider,
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const contract = new ethers.Contract(
+      process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
+      ParentChildRelationshipABI.abi,
+      provider
+    );
+
+    const children = await contract.returnChildInformation();
+
+    return children;
   };
+
+  return getChildInformation;
 };
