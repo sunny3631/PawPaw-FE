@@ -1,34 +1,153 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import styled from "styled-components";
 
 import FaPaw from "../assets/icons/foot.svg";
 import Left from "../assets/image/leftBackground.svg";
 import Right from "../assets/image/rightBackground.svg";
+import { ethers } from "ethers";
+import abi from "../abi/ParentChildRelationshipWithMeta.json";
+import axios from "axios";
 
-const RoundedBox = ({ hasIcon, onClick, label }) => {
+const RoundedBox = ({ onClick, label, vaccineInfo }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedData, setSelectedData] = useState("");
+  const [selectedDose, setSelectedDose] = useState("1");
+
+  const handleClick = () => {
+    if (isExpanded) {
+      // 이미 확장된 상태에서 클릭하면 닫히고 데이터 초기화
+      setSelectedData("");
+      setSelectedDose("1");
+      onClick?.(vaccineInfo.vaccine, null); // 데이터 삭제
+    }
+
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleDateChange = (e) => {
+    setSelectedData(e.target.value);
+    updateVaccinationData(selectedDose, e.target.value);
+  };
+
+  const handleDoseChange = (e) => {
+    setSelectedDose(e.target.value);
+    updateVaccinationData(e.target.value, selectedData);
+  };
+
+  const updateVaccinationData = (dose, date) => {
+    if (date && dose) {
+      onClick?.(vaccineInfo.vaccine, {
+        vaccineName: vaccineInfo.vaccine,
+        vaccineChapter: parseInt(dose),
+        administerDate: Math.floor(new Date(date).getTime() / 1000),
+      });
+    }
+  };
+
+  const doseOptions = useMemo(() => {
+    return Array.from({ length: vaccineInfo.maxChapter }, (_, i) => i + 1);
+  }, [vaccineInfo.maxChapter]);
+
   return (
-    <RoundedBoxContainer onClick={onClick}>
-      <IconContainer>
-        {!hasIcon ? "" : <img src={FaPaw} alt="" color="#4f2304" size={24} />}
-      </IconContainer>
-      <Label>{label}</Label>
-    </RoundedBoxContainer>
+    <VaccineContainer>
+      <StyledRoundedBox $isOpen={isExpanded} onClick={handleClick}>
+        <IconContainer>
+          {!isExpanded ? (
+            ""
+          ) : (
+            <img src={FaPaw} alt="" color="#4f2304" size={24} />
+          )}
+        </IconContainer>
+        <Label>{label}</Label>
+      </StyledRoundedBox>
+      <ExpandablePanel $isOpen={isExpanded}>
+        <PanelContent $isOpen={isExpanded}>
+          <div style={{ padding: "20px" }}>
+            <InfoRow>
+              <InfoLabel>예방접종 이름:</InfoLabel>
+              <InfoValue>{label}</InfoValue>
+            </InfoRow>
+            <InfoRow>
+              <InfoLabel>백신 종류:</InfoLabel>
+              <InfoValue>{vaccineInfo.vaccine}</InfoValue>
+            </InfoRow>
+            <InfoRow>
+              <InfoLabel>날짜:</InfoLabel>
+              <DateInput
+                type="date"
+                value={selectedData}
+                onChange={handleDateChange}
+                min="2000-01-01"
+                max="2024-12-31"
+              />
+            </InfoRow>
+            <InfoRow>
+              <InfoLabel>차수:</InfoLabel>
+              <DoseSelect value={selectedDose} onChange={handleDoseChange}>
+                {doseOptions.map((chapter) => (
+                  <option key={chapter} value={chapter}>
+                    {chapter}차수
+                  </option>
+                ))}
+              </DoseSelect>
+            </InfoRow>
+          </div>
+        </PanelContent>
+      </ExpandablePanel>
+    </VaccineContainer>
   );
 };
 
-const RoundedBoxContainer = styled.div`
+// 스타일 컴포넌트 수정
+const StyledRoundedBox = styled.div`
   display: flex;
   align-items: center;
   width: 275px;
   height: 60px;
   background-color: #fff7e4;
-  border-radius: 30px;
+  border-radius: ${(props) => (props.$isOpen ? "30px 30px 0 0" : "30px")};
   border: 1px solid #f4c784;
   padding: 10px;
   box-sizing: border-box;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
+`;
+
+const ExpandablePanel = styled.div`
+  width: 275px;
+  background-color: #fff7e4;
+  margin-top: 2px;
+  border-radius: 0 0 15px 15px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: ${(props) => (props.$isOpen ? "200px" : "0")};
+  opacity: ${(props) => (props.$isOpen ? "1" : "0")};
+`;
+
+const PanelContent = styled.div`
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(${(props) => (props.$isOpen ? "0" : "-20px")});
+  opacity: ${(props) => (props.$isOpen ? "1" : "0")};
+`;
+
+// 새로운 스타일 컴포넌트들
+const VaccineContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const DateInput = styled.input`
+  padding: 4px 8px;
+  border: 1px solid #f4c784;
+  border-radius: 4px;
+  background-color: white;
+  color: #4f2304;
+  font-family: inherit;
 `;
 
 const IconContainer = styled.div`
@@ -48,40 +167,141 @@ const Label = styled.label`
   color: #4f2304;
 `;
 
+const InfoRow = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const InfoLabel = styled.span`
+  width: 100px;
+  color: #4f2304;
+  font-size: 14px;
+`;
+
+const InfoValue = styled.span`
+  color: #4f2304;
+  font-size: 14px;
+`;
+
+const DoseSelect = styled.select`
+  padding: 4px 8px;
+  border: 1px solid #f4c784;
+  border-radius: 4px;
+  background-color: white;
+  color: #4f2304;
+`;
+
 const SynchronizationVaccination = () => {
-  const vaccineNames = [
-    "디프테리아",
-    "폴리오",
-    "백일해",
-    "홍역",
-    "파상풍",
-    "결핵",
-    "B형간염",
-    "유행성이하선염",
-    "풍진",
-    "수두",
-    "일본뇌염",
-    "B형헤모필루스인플루엔자",
-    "폐렴구균",
-    "인플루엔자",
-    "A형간염",
-    "사람유두종바이러스",
-    "장티푸스",
-    "신증후군출혈열",
-    "그룹 A형 로타바이러스 감염증",
-  ];
-
-  const [selectedVaccines, setSelectedVaccines] = useState(
-    vaccineNames.reduce((acc, vaccine) => ({ ...acc, [vaccine]: false }), {})
-  );
-
+  // 자녀 주소 가져오기
+  const location = useLocation();
+  const childAddress = location.state.childAddress;
   const navigate = useNavigate();
 
-  const handleVaccineChange = (vaccine) => {
-    setSelectedVaccines((prev) => ({
-      ...prev,
-      [vaccine]: !prev[vaccine],
-    }));
+  // 백신 정보 업데이트 진행
+  const [vaccinations, setVaccinations] = useState([]);
+
+  const api = axios.create({
+    baseURL: "http://localhost:8080",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const vaccineList = [
+    { disName: "결핵", vaccine: "BCG", maxChapter: 1 },
+    { disName: "B형간염", vaccine: "HepB", maxChapter: 3 },
+    { disName: "디프테리아", vaccine: "DTap", maxChapter: 5 },
+    { disName: "파상풍", vaccine: "DTap", maxChapter: 5 },
+    { disName: "백일해", vaccine: "DTap", maxChapter: 5 },
+    { disName: "폴리오", vaccine: "IPV", maxChapter: 4 },
+    { disName: "B형헤모필루스인플루엔자", vaccine: "Hib", maxChapter: 4 },
+    { disName: "폐렴구균", vaccine: "PCV", maxChapter: 4 },
+    { disName: "로타바이러스 감염증-(1)", vaccine: "RV1", maxChapter: 2 },
+    { disName: "로타바이러스 감염증-(2)", vaccine: "RV5", maxChapter: 3 },
+    { disName: "홍역", vaccine: "MMR", maxChapter: 2 },
+    { disName: "유행성이하선염", vaccine: "MMR", maxChapter: 2 },
+    { disName: "풍진", vaccine: "MMR", maxChapter: 2 },
+    { disName: "수두", vaccine: "VAR", maxChapter: 1 },
+    { disName: "A형간염", vaccine: "HepA", maxChapter: 2 },
+    { disName: "일본뇌염-(1)", vaccine: "IJEV", maxChapter: 5 },
+    { disName: "일본뇌염-(2)", vaccine: "LJEV", maxChapter: 2 },
+    { disName: "사람유두종바이러스", vaccine: "HPV", maxChapter: 2 },
+  ];
+
+  const handleVaccineChange = (vaccineName, vaccinationData) => {
+    setVaccinations((prev) => {
+      const filtered = prev.filter((v) => v.vaccineName !== vaccineName);
+      return vaccinationData ? [...filtered, vaccinationData] : filtered;
+    });
+  };
+
+  const synchronizationVaccinations = async () => {
+    try {
+      if (!window.ethereum) {
+        throw Error("Metamask not install");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+
+      const contract = new ethers.Contract(
+        process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
+        abi.abi,
+        provider
+      );
+
+      const domain = {
+        name: "ParentChildRelationshipWithMeta",
+        version: "1",
+        chainId: await signer.provider
+          .getNetwork()
+          .then((network) => network.chainId),
+        verifyingContract: contract.target,
+      };
+      const nonce = await contract.getNonce(signer.address);
+
+      const types = {
+        UpdateMultipleVaccination: [
+          { name: "parent", type: "address" },
+          { name: "childAddress", type: "address" },
+          { name: "vaccinations", type: "VaccinationInput[]" },
+          { name: "nonce", type: "uint256" },
+        ],
+        VaccinationInput: [
+          { name: "vaccineName", type: "string" },
+          { name: "vaccineChapter", type: "uint8" },
+          { name: "administerDate", type: "uint256" },
+        ],
+      };
+
+      const messages = {
+        parent: signer.address,
+        childAddress: childAddress,
+        vaccinations: vaccinations,
+        nonce,
+      };
+
+      const signature = await signer.signTypedData(domain, types, messages);
+
+      const response = await api.post("/contract//vaccination/updateMulti", {
+        parent: signer.address,
+        childAddress: childAddress,
+        vaccinations: vaccinations,
+        signature,
+      });
+
+      if (response.data.success) {
+        console.log("tx hash: ", response.data.data.transactionHash);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
   };
 
   return (
@@ -116,19 +336,20 @@ const SynchronizationVaccination = () => {
       </div>
       <FormTitle>백신 동기화</FormTitle>{" "}
       <VaccineList>
-        {vaccineNames.map((vaccine) => (
+        {vaccineList.map((value) => (
           <RoundedBox
-            key={vaccine}
-            hasIcon={selectedVaccines[vaccine]}
-            onClick={() => handleVaccineChange(vaccine)}
-            label={vaccine}
+            key={value.disName}
+            onClick={handleVaccineChange}
+            label={value.disName}
+            vaccineInfo={value}
           />
         ))}
       </VaccineList>
       <NextButton
-        onClick={() => {
-          // 백신동기화하는 서명 생성하여야 합니다.
-          navigate("/");
+        onClick={async () => {
+          console.log(vaccinations);
+          // await synchronizationVaccinations();
+          // navigate("/");
         }}
       >
         해당사항 체크완료

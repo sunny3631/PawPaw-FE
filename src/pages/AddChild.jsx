@@ -3,6 +3,18 @@ import styled from "styled-components";
 import Left from "../assets/image/leftBackground.svg";
 import Right from "../assets/image/rightBackground.svg";
 import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
+
+import abi from "../abi/ParentChildRelationshipWithMeta.json";
+import toUnixTimestamp from "../utils/toUnixtimestamp";
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://localhost:8080",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
 const AddChild = () => {
   const [step, setStep] = useState(1);
@@ -39,6 +51,86 @@ const AddChild = () => {
   const handleNext = () => {
     if (validate()) {
       setStep(2);
+    }
+  };
+
+  const createChild = async () => {
+    try {
+      if (!window.ethereum) {
+        throw Error("MetaMask not install");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+
+      const contract = new ethers.Contract(
+        process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
+        abi.abi,
+        provider
+      );
+
+      const domain = {
+        name: "ParentChildRelationshipWithMeta",
+        version: "1",
+        chainId: await signer.provider
+          .getNetwork()
+          .then((network) => network.chainId),
+        verifyingContract: contract.target,
+      };
+
+      const nonce = await contract.getNonce(signer.address);
+
+      const types = {
+        CreateChild: [
+          { name: "parent", type: "address" },
+          { name: "name", type: "string" },
+          { name: "birthDate", type: "uint256" },
+          { name: "height", type: "uint16" },
+          { name: "weight", type: "uint16" },
+          { name: "nonce", type: "uint256" },
+        ],
+      };
+
+      const message = {
+        parent: signer.address,
+        name: information.name,
+        birthDate: toUnixTimestamp(information.birthDate),
+        height: ethers.getUint(Math.round(parseFloat(information.height) * 10)),
+        weight: ethers.getUint(Math.round(parseFloat(information.weight) * 10)),
+        nonce,
+      };
+
+      const signature = await signer.signTypedData(domain, types, message);
+
+      const response = await api.post("/contract/create", {
+        parent: signer.address,
+        childName: information.name,
+        birthDate: toUnixTimestamp(information.birthDate),
+        height: Math.round(parseFloat(information.height) * 10),
+        weight: Math.round(parseFloat(information.weight) * 10),
+        signature,
+      });
+
+      if (response.data.success) {
+        // 이벤트에서 자녀 주소 추출
+        const createChildEvent = response.data.data.events.find(
+          (event) => event.name === "CreateChild"
+        );
+        const childAddress = createChildEvent.args[1]; // CreateChild 이벤트의 두 번째 인자가 childAddress
+        console.log("Child Address:", childAddress);
+
+        return { success: true, childAddress };
+      }
+
+      return {
+        success: false,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+      };
     }
   };
 
@@ -128,10 +220,32 @@ const AddChild = () => {
         </>
       ) : (
         <div>
-          <NextButton onClick={() => navigate("/synchronizationVaccination")}>
+          <NextButton
+            onClick={async () => {
+              const isok = await createChild();
+              if (isok.success) {
+                navigate("/synchronizationVaccination", {
+                  state: {
+                    childAddress: isok.childAddress,
+                  },
+                });
+              } else {
+                alert("아이 등록에 실패하였습니다.");
+              }
+            }}
+          >
             동기화 할래요.
           </NextButton>
-          <NextButton onClick={() => navigate("/dashboard")}>
+          <NextButton
+            onClick={async () => {
+              const isok = await createChild();
+              if (isok.success) {
+                navigate("/select");
+              } else {
+                alert("아이 등록에 실패하였습니다.");
+              }
+            }}
+          >
             동기화 안할래요.
           </NextButton>
         </div>
