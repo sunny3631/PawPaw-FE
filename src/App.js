@@ -9,7 +9,6 @@ import {
   useRecoilValue,
 } from "recoil";
 import CharacterCounter from "./components/CharacterCounter";
-import rep_img from "./assets/represent_image.png";
 import DashBoard from "./pages/DashBorad";
 import Survey from "./pages/Survey";
 import MyPage from "./pages/MyPage";
@@ -19,7 +18,7 @@ import GlobalStyles from "./styles/GlobalStyle";
 function App() {
   const name = "고현림";
   const age = "22개월";
-  const imgUrl = rep_img;
+  const imgUrl = "https://i.ibb.co/k8N4d6t/6.png";
 
   return (
     <>
