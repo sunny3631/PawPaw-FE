@@ -1,5 +1,5 @@
 import axios from "axios";
-import { userAuth } from "./login";
+import { userAuth } from "../login";
 
 export const api = axios.create({
   baseURL: "http://3.37.62.216/",

@@ -1,4 +1,4 @@
-import { api } from "../instance";
+import { api } from "../instance/userInstance.js";
 
 export const userAuth = {
   login: async (address) => {

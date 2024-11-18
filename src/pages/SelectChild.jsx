@@ -23,7 +23,7 @@ const SelectChild = () => {
     const contract = new ethers.Contract(
       process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
       ParentChildRelationshipABI.abi,
-      signer // provider 대신 signer 사용
+      signer
     );
 
     const children = await contract.returnChildInformation();
@@ -36,7 +36,6 @@ const SelectChild = () => {
       try {
         const childData = await getChildInformation();
         setChildren(Array.isArray(childData) ? childData : []);
-        console.log(childData);
       } catch (error) {
         console.error("Failed to fetch children data:", error);
       }
@@ -61,13 +60,10 @@ const SelectChild = () => {
         <Title>아이의 프로필을 선택해주세요</Title>
         <GridContainer>
           {children.map((child, index) => (
-            // 누르게 되면 자식의 대시보드로 넘어가도록 개발이 되어야 함.
-            // 자식들의 주소를 활용하여 대시보드에 접근
-            // 만약 다른 부모들이 자식의 데이터에 접근을 하지 못하도록 함.
             <ProfileBox
               key={index}
               onClick={() => {
-                console.log("/dashboard");
+                navigate(`/dashboard/${children[index]["0"]}`);
               }}
             >
               <ProfileImage src={child.imgUrl || defaultImage} alt="profile" />
@@ -76,7 +72,7 @@ const SelectChild = () => {
           ))}
           <ProfileBox
             onClick={() => {
-              navigate("/add");
+              navigate("/addChild");
             }}
           >
             <ProfileImage src={addImage} alt="add profile" />

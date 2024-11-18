@@ -1,25 +1,18 @@
 import "./App.css";
 import MainPage from "./pages/MainPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import {
-  RecoilRoot,
-  atom,
-  selector,
-  useRecoilState,
-  useRecoilValue,
-} from "recoil";
-import CharacterCounter from "./components/CharacterCounter";
+import { RecoilRoot } from "recoil";
 import DashBoard from "./pages/DashBorad";
 import Survey from "./pages/Survey";
 import MyPage from "./pages/MyPage";
 import Etc from "./pages/Etc";
 import GlobalStyles from "./styles/GlobalStyle";
+import Login from "./pages/Login";
+import SynchronizationChild from "./pages/SynchronizationChild";
+import SelectChild from "./pages/SelectChild";
+import AddChild from "./pages/AddChild";
 
 function App() {
-  const name = "고현림";
-  const age = "22개월";
-  const imgUrl = "https://i.ibb.co/k8N4d6t/6.png";
-
   return (
     <>
       <GlobalStyles />
@@ -27,22 +20,20 @@ function App() {
         {/* <CharacterCounter /> */}
         <Router>
           <Routes>
-            <Route
-              path="/"
-              element={<DashBoard name={name} age={age} imgUrl={imgUrl} />}
-            />
-            <Route
-              path="/survey"
-              element={<Survey name={name} age={age} imgUrl={imgUrl} />}
-            />
-            <Route
-              path="/mypage"
-              element={<MyPage name={name} age={age} imgUrl={imgUrl} />}
-            />
-            <Route
-              path="/etc"
-              element={<Etc name={name} age={age} imgUrl={imgUrl} />}
-            />
+            <Route path="/" element={<MainPage />} />
+            {/* 로그인 */}
+            <Route path="/login" element={<Login />} />
+            {/* 자녀 추가 */}
+            <Route path="/addChild" element={<AddChild />} />
+            {/* 자녀 선택 */}
+            <Route path="/selectChild" element={<SelectChild />} />
+            {/* 자녀 동기화 */}
+            <Route path="/synchronization" element={<SynchronizationChild />} />
+
+            <Route path="/dashboard/:childAddress" element={<DashBoard />} />
+            <Route path="/survey/:childAddress" element={<Survey />} />
+            <Route path="/mypage/:childAddress" element={<MyPage />} />
+            <Route path="/etc/:childAddress" element={<Etc />} />
           </Routes>
         </Router>
       </RecoilRoot>

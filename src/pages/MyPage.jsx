@@ -1,19 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "../components/common/Layout";
 import axios from "axios";
 import styled from "styled-components";
-import Camera from "../assets/icon/Camera.svg";
+import Camera from "../assets/icons/Camera.svg";
+import { useParams } from "react-router-dom";
+import { child } from "../api/child";
 
-const MyPage = ({ name, age, imgUrl }) => {
-  // 접속할 때 자녀의 주소를 통해서 들어와야 함.
-  const [profileImg, setProfileImg] = useState(imgUrl);
-  const [isLoading, setIsLoading] = useState(false);
-  const [userInfo] = useState({
-    이름: name,
-    생년월일: "생년월일",
-    "개월 수": age,
-    "연동 코드": "연동 코드",
+const MyPage = () => {
+  const params = useParams();
+  const [imgUrl, setImgUrl] = useState(""); // 이미지 URL 상태 분리
+  const [information, setInformation] = useState({
+    name: "",
+    age: "",
+    childaddress: "",
   });
+
+  useEffect(() => {
+    const fetchChildData = async () => {
+      try {
+        const response = await child.return(params.id);
+
+        if (response.data.isSuccess) {
+          // 이미지 URL 따로 설정
+          setImgUrl(response.data.result.profile);
+          setInformation({
+            name: response.data.result.name,
+            age: response.data.result.birthDate,
+            childaddress: params.id,
+          });
+        }
+      } catch (error) {
+        console.error("데이터 조회 실패:", error);
+      }
+    };
+
+    if (params.id) {
+      fetchChildData();
+    }
+  }, [params.id]);
 
   const uploadToImgBB = async (file) => {
     const formData = new FormData();
@@ -31,7 +55,7 @@ const MyPage = ({ name, age, imgUrl }) => {
       );
 
       if (response.data.success) {
-        setProfileImg(response.data.data.url);
+        setImgUrl(response.data.data.url); // imgUrl 상태만 업데이트
         return response.data.data.url;
       }
     } catch (error) {
@@ -47,30 +71,28 @@ const MyPage = ({ name, age, imgUrl }) => {
         alert("파일 크기는 2MB 이하여야 합니다.");
         return;
       }
-
-      setIsLoading(true);
       try {
         await uploadToImgBB(file);
       } catch (error) {
         alert(error.message);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   return (
-    <Layout name={name} age={age} imgUrl={imgUrl} type="mypage">
+    <Layout
+      name={information.name}
+      age={information.age}
+      imgUrl={imgUrl} // 분리된 imgUrl 사용
+      type="mypage"
+    >
       <Container>
         <TitleWrapper>
           <Title>마이페이지</Title>
         </TitleWrapper>
 
         <ImageWrapper>
-          <ProfileImage
-            src={isLoading ? imgUrl : profileImg}
-            alt="프로필 이미지"
-          />
+          <ProfileImage src={imgUrl} alt="프로필 이미지" />
           <UpdateImageWrapper>
             <label htmlFor="profile-upload">
               <UpdateImage src={Camera} alt="카메라" />
@@ -81,7 +103,6 @@ const MyPage = ({ name, age, imgUrl }) => {
               accept="image/*"
               onChange={handleFileInput}
               style={{ display: "none" }}
-              disabled={isLoading}
             />
           </UpdateImageWrapper>
         </ImageWrapper>
@@ -89,7 +110,7 @@ const MyPage = ({ name, age, imgUrl }) => {
         <InformationWrapper>
           <InformationTitle>아이 기본정보</InformationTitle>
           <InfoContainer>
-            {Object.entries(userInfo).map(([key, value]) => (
+            {Object.entries(information).map(([key, value]) => (
               <InfoItem key={key}>
                 <InfoLabel>{key}</InfoLabel>
                 <InfoValue>{value}</InfoValue>

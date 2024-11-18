@@ -24,8 +24,8 @@ const SynchronizationChild = () => {
           if (childCode === "") {
             alert("정확한 값을 입력해주세요.");
           } else {
-            alert("동기화가 정상적으로 진행되었습니다.");
-            navigate("/select");
+            // 동기화 로직 추가
+            navigate("/selectChild");
           }
         }}
       >

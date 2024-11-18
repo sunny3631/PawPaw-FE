@@ -19,7 +19,7 @@ const Login = () => {
           localStorage.setItem("accessToken", accessToken);
           localStorage.setItem("refreshToken", refreshToken);
 
-          navigate("/select");
+          navigate("/selectChild");
         } else {
           console.log("로그인 실패: ", response.data.message);
         }

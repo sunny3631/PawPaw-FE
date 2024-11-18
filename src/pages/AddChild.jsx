@@ -6,17 +6,16 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 
 import abi from "../abi/ParentChildRelationshipWithMeta.json";
-import toUnixTimestamp from "../utils/toUnixtimestamp";
-import axios from "axios";
+import toUnixTimestamp from "../utils/toUnixtimestamp.js";
+import { metaTxAPI } from "../api/instance/metaTransactionInstance.js";
+import { formatInformation } from "../utils/formatInformation.js";
 
-const api = axios.create({
-  baseURL: "http://localhost:8080",
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+import { encodeData } from "../utils/cryption.js";
+import { child } from "../api/child/index.js";
 
 const AddChild = () => {
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
   const [information, setInformation] = useState({
     name: "",
@@ -24,8 +23,6 @@ const AddChild = () => {
     height: "",
     weight: "",
   });
-  const navigate = useNavigate();
-
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
@@ -96,19 +93,19 @@ const AddChild = () => {
         parent: signer.address,
         name: information.name,
         birthDate: toUnixTimestamp(information.birthDate),
-        height: ethers.getUint(Math.round(parseFloat(information.height) * 10)),
-        weight: ethers.getUint(Math.round(parseFloat(information.weight) * 10)),
+        height: formatInformation(information.height),
+        weight: formatInformation(information.weight),
         nonce,
       };
 
       const signature = await signer.signTypedData(domain, types, message);
 
-      const response = await api.post("/contract/create", {
+      const response = await metaTxAPI.post("/contract/create", {
         parent: signer.address,
         childName: information.name,
         birthDate: toUnixTimestamp(information.birthDate),
-        height: Math.round(parseFloat(information.height) * 10),
-        weight: Math.round(parseFloat(information.weight) * 10),
+        height: formatInformation(information.height),
+        weight: formatInformation(information.weight),
         signature,
       });
 
@@ -118,9 +115,28 @@ const AddChild = () => {
           (event) => event.name === "CreateChild"
         );
         const childAddress = createChildEvent.args[1]; // CreateChild 이벤트의 두 번째 인자가 childAddress
-        console.log("Child Address:", childAddress);
 
-        return { success: true, childAddress };
+        // 여기서 백엔드 연결하는 코드 작성
+        try {
+          const backendResponse = await child.create({
+            address: childAddress,
+            name: message.childName,
+            birthDate: message.birthDate,
+            height: message.height,
+            weight: message.weight,
+          });
+
+          if (backendResponse.data.isSuccess) {
+            return { success: true, childAddress };
+          } else {
+            throw new Error("백엔드 API 호출 에러");
+          }
+        } catch (error) {
+          console.error(error);
+          return {
+            success: false,
+          };
+        }
       }
 
       return {
@@ -240,7 +256,7 @@ const AddChild = () => {
             onClick={async () => {
               const isok = await createChild();
               if (isok.success) {
-                navigate("/select");
+                navigate("/selectChild");
               } else {
                 alert("아이 등록에 실패하였습니다.");
               }
