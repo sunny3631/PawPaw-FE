@@ -4,11 +4,15 @@ import Header from "./Header";
 import Navigation from "./Navigation";
 import styled from "styled-components";
 
-const Layout = ({ name, age, imgUrl, children }) => {
+const Layout = ({ name, age, imgUrl, children, type }) => {
   const [activate, setActivate] = useState();
   return (
     <LayoutContainer>
-      <Header name={name} age={age} imgUrl={imgUrl} />
+      {type !== "mypage" && (
+        <>
+          <Header name={name} age={age} imgUrl={imgUrl} />
+        </>
+      )}
       <Content>{children}</Content>
       <NavigationWrapper>
         <Navigation activate={activate} setActivate={setActivate} />
