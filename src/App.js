@@ -11,6 +11,10 @@ import Login from "./pages/Login";
 import SynchronizationChild from "./pages/SynchronizationChild";
 import SelectChild from "./pages/SelectChild";
 import AddChild from "./pages/AddChild";
+import Vaccination from "./pages/Vaccination";
+import VaccinationDetail from "./pages/VaccinationDetail"; // 상세 페이지
+import MedicalHistory from "./pages/MedicalHistory";
+import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
 
 function App() {
   return (
@@ -34,6 +38,22 @@ function App() {
             <Route path="/survey/:childAddress" element={<Survey />} />
             <Route path="/mypage/:childAddress" element={<MyPage />} />
             <Route path="/etc/:childAddress" element={<Etc />} />
+            <Route
+              path="/vaccination"
+              element={<Vaccination name={name} age={age} imgUrl={imgUrl} />}
+            />
+            <Route 
+              path="/detail/:id" 
+              element={<VaccinationDetail name={name} age={age} imgUrl={imgUrl} />} 
+            />
+            <Route 
+              path="/medicalhistory" 
+              element={<MedicalHistory name={name} age={age} imgUrl={imgUrl} />} 
+            />
+            <Route 
+              path="/details/:id" 
+              element={<MedicalHistoryDetail name={name} age={age} imgUrl={imgUrl} />} 
+            />
           </Routes>
         </Router>
       </RecoilRoot>
