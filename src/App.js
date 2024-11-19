@@ -40,19 +40,19 @@ function App() {
             <Route path="/etc/:childAddress" element={<Etc />} />
             <Route
               path="/vaccination"
-              element={<Vaccination name={name} age={age} imgUrl={imgUrl} />}
+              element={<Vaccination  />}
             />
             <Route 
               path="/detail/:id" 
-              element={<VaccinationDetail name={name} age={age} imgUrl={imgUrl} />} 
+              element={<VaccinationDetail  />} 
             />
             <Route 
               path="/medicalhistory" 
-              element={<MedicalHistory name={name} age={age} imgUrl={imgUrl} />} 
+              element={<MedicalHistory  />} 
             />
             <Route 
               path="/details/:id" 
-              element={<MedicalHistoryDetail name={name} age={age} imgUrl={imgUrl} />} 
+              element={<MedicalHistoryDetail  />} 
             />
           </Routes>
         </Router>
