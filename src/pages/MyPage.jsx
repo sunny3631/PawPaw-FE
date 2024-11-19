@@ -15,7 +15,11 @@ const MyPage = () => {
     childaddress: "",
   });
 
+  const defaultImg = "https://i.ibb.co/k8N4d6t/6.png";
+
   useEffect(() => {
+    setImgUrl(defaultImg);
+
     const fetchChildData = async () => {
       try {
         const response = await child.return(params.id);
@@ -85,6 +89,7 @@ const MyPage = () => {
       age={information.age}
       imgUrl={imgUrl} // 분리된 imgUrl 사용
       type="mypage"
+      childAddress={params.childAddress}
     >
       <Container>
         <TitleWrapper>

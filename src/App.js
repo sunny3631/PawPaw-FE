@@ -39,21 +39,15 @@ function App() {
             <Route path="/mypage/:childAddress" element={<MyPage />} />
             <Route path="/etc/:childAddress" element={<Etc />} />
             <Route
-              path="/vaccination"
-              element={<Vaccination name={name} age={age} imgUrl={imgUrl} />}
+              path="/vaccination/:childAddress"
+              element={<Vaccination />}
             />
-            <Route 
-              path="/detail/:id" 
-              element={<VaccinationDetail name={name} age={age} imgUrl={imgUrl} />} 
+            <Route
+              path="/vaccination/detail/:id"
+              element={<VaccinationDetail />}
             />
-            <Route 
-              path="/medicalhistory" 
-              element={<MedicalHistory name={name} age={age} imgUrl={imgUrl} />} 
-            />
-            <Route 
-              path="/details/:id" 
-              element={<MedicalHistoryDetail name={name} age={age} imgUrl={imgUrl} />} 
-            />
+            <Route path="/medicalhistory" element={<MedicalHistory />} />
+            <Route path="/details/:id" element={<MedicalHistoryDetail />} />
           </Routes>
         </Router>
       </RecoilRoot>

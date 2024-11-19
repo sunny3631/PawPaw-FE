@@ -5,6 +5,7 @@ import addImage from "../assets/image/addImage.svg";
 import { useNavigate } from "react-router-dom";
 import ParentChildRelationshipABI from "../abi/ParentChildRelationshipWithMeta.json";
 import { ethers } from "ethers";
+import { decodeData } from "../utils/cryption";
 
 const SelectChild = () => {
   const [children, setChildren] = useState([]);
@@ -28,7 +29,20 @@ const SelectChild = () => {
 
     const children = await contract.returnChildInformation();
 
-    return children;
+    const decryptedChildren = children.map((child) => {
+      try {
+        // child 객체의 구조를 유지하면서 암호화된 name 필드만 복호화
+        return {
+          ...child,
+          name: decodeData(child.name, signer.address), // 메타마스크 주소로 복호화
+        };
+      } catch (error) {
+        console.error("Failed to decrypt child name:", error);
+        return child; // 복호화 실패 시 원본 데이터 반환
+      }
+    });
+
+    return decryptedChildren;
   };
 
   useEffect(() => {
@@ -63,11 +77,12 @@ const SelectChild = () => {
             <ProfileBox
               key={index}
               onClick={() => {
+                // 여기서 백엔드에서 데이터를 조회 하였을 떄 자녀가 있으면 자녀에 대한 정보를 먼저 추가하고 난 이후에 개발을 진행하는 것으로 함
                 navigate(`/dashboard/${children[index]["0"]}`);
               }}
             >
               <ProfileImage src={child.imgUrl || defaultImage} alt="profile" />
-              <ProfileName>{child.name}</ProfileName>
+              <ProfileName>{child.name || "Unknown"}</ProfileName>
             </ProfileBox>
           ))}
           <ProfileBox

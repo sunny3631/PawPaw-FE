@@ -208,6 +208,7 @@ const SynchronizationVaccination = () => {
     },
   });
 
+  // 이거 이렇게 하는게 아니라 맞지 않은 백신에 대한 정보를 가져와야 합니다.
   const vaccineList = [
     { disName: "결핵", vaccine: "BCG", maxChapter: 1 },
     { disName: "B형간염", vaccine: "HepB", maxChapter: 3 },

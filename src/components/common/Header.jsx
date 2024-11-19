@@ -1,13 +1,25 @@
+import { useState, useEffect } from "react";
 import styled from "styled-components";
-import wave from "../../assets/background/wave.svg";
 
 const Header = ({ name, age, imgUrl }) => {
+  const [imageURL, setimageURL] = useState("");
+  const defaultImg = "https://i.ibb.co/k8N4d6t/6.png";
+
+  useEffect(() => {
+    // props로 받은 imgUrl이 변경될 때마다 확인
+    if (imgUrl === "") {
+      setimageURL(defaultImg);
+    } else {
+      setimageURL(imgUrl);
+    }
+  }, [imgUrl]);
+
   return (
     <HeaderContainer>
       <Title>PAWPAW</Title>
       <ProfileContainer>
         <RepresentImageWrapper>
-          <RepresentImage src={imgUrl} alt="" />
+          <RepresentImage src={imageURL} alt="" />
         </RepresentImageWrapper>
         <InformationContainer>
           <Name>{name}</Name>
