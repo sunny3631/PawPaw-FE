@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import ParentChildRelationshipABI from "../abi/ParentChildRelationshipWithMeta.json";
 import { ethers } from "ethers";
 import { decodeData } from "../utils/cryption";
+import { child } from "../api/child";
 
 const SelectChild = () => {
   const [children, setChildren] = useState([]);
@@ -27,22 +28,86 @@ const SelectChild = () => {
       signer
     );
 
-    const children = await contract.returnChildInformation();
+    const childrenData = await contract.returnChildInformation();
 
-    const decryptedChildren = children.map((child) => {
-      try {
-        // child 객체의 구조를 유지하면서 암호화된 name 필드만 복호화
-        return {
-          ...child,
-          name: decodeData(child.name, signer.address), // 메타마스크 주소로 복호화
-        };
-      } catch (error) {
-        console.error("Failed to decrypt child name:", error);
-        return child; // 복호화 실패 시 원본 데이터 반환
-      }
-    });
+    const decryptedChildren = await Promise.all(
+      childrenData.map(async (child) => {
+        try {
+          const healthInformation = await contract.returnHealthInformation(
+            child[0]
+          );
+          return {
+            ...child,
+            name: decodeData(child.name, signer.address),
+            height: healthInformation[0],
+            weight: healthInformation[1],
+          };
+        } catch (error) {
+          console.error("Failed to process child data:", error);
+          return {
+            ...child,
+            name: "Unknown",
+            height: 0,
+            weight: 0,
+          };
+        }
+      })
+    );
 
     return decryptedChildren;
+  };
+
+  const verifyAndCreateChild = async (childInfo) => {
+    const formatUnixTimestampToYYYYMMDD = (timestamp) => {
+      const date = new Date(timestamp * 1000); // 초 단위를 밀리초로 변환
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    };
+
+    try {
+      const response = await child.returns();
+
+      if (!response.data?.result) {
+        throw new Error("Failed to fetch children data");
+      }
+
+      // 동일한 이름의 자녀가 있는지 확인
+      const existingChild = response.data.result.find(
+        (item) => item.name === childInfo.name
+      );
+
+      // 자녀를 조회했는데 없다면
+      if (!existingChild) {
+        const newChildData = {
+          address: childInfo[0],
+          name: childInfo.name,
+          birthDate: formatUnixTimestampToYYYYMMDD(Number(childInfo[2])),
+          height: Number(childInfo.height || 0),
+          weight: Number(childInfo.weight || 0),
+        };
+
+        const response = await child.create(newChildData);
+
+        return {
+          success: true,
+          id: response.data.id,
+        };
+      }
+
+      return {
+        success: true,
+        id: response.data.id,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        success: false,
+        id: null,
+      };
+    }
   };
 
   useEffect(() => {
@@ -76,9 +141,13 @@ const SelectChild = () => {
           {children.map((child, index) => (
             <ProfileBox
               key={index}
-              onClick={() => {
+              onClick={async () => {
                 // 여기서 백엔드에서 데이터를 조회 하였을 떄 자녀가 있으면 자녀에 대한 정보를 먼저 추가하고 난 이후에 개발을 진행하는 것으로 함
-                navigate(`/dashboard/${children[index]["0"]}`);
+                const { success, id } = await verifyAndCreateChild(child);
+                if (success) {
+                  navigate(`/dashboard/${children[index]["0"]}/${id}`);
+                }
+                // navigate(`/dashboard/${children[index]["0"]}`);
               }}
             >
               <ProfileImage src={child.imgUrl || defaultImage} alt="profile" />

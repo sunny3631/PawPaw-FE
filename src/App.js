@@ -15,6 +15,7 @@ import Vaccination from "./pages/Vaccination";
 import VaccinationDetail from "./pages/VaccinationDetail"; // 상세 페이지
 import MedicalHistory from "./pages/MedicalHistory";
 import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
+import SynchronizationVaccination from "./pages/SynchronizationVaccination";
 
 function App() {
   return (
@@ -33,11 +34,18 @@ function App() {
             <Route path="/selectChild" element={<SelectChild />} />
             {/* 자녀 동기화 */}
             <Route path="/synchronization" element={<SynchronizationChild />} />
+            <Route
+              path="/synchronization/vaccine/:childAddress"
+              element={<SynchronizationVaccination />}
+            />
 
-            <Route path="/dashboard/:childAddress" element={<DashBoard />} />
-            <Route path="/survey/:childAddress" element={<Survey />} />
-            <Route path="/mypage/:childAddress" element={<MyPage />} />
-            <Route path="/etc/:childAddress" element={<Etc />} />
+            <Route
+              path="/dashboard/:childAddress/:id"
+              element={<DashBoard />}
+            />
+            <Route path="/survey/:childAddress/:id" element={<Survey />} />
+            <Route path="/mypage/:childAddress/:id" element={<MyPage />} />
+            <Route path="/etc/:childAddress/:id" element={<Etc />} />
             <Route
               path="/vaccination/:childAddress"
               element={<Vaccination />}

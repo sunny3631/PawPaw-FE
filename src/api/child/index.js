@@ -12,7 +12,11 @@ export const child = {
     return response;
   },
 
-  returns: async () => {},
+  returns: async () => {
+    const response = await api.get("/api/children");
+
+    return response;
+  },
 
   return: async (childAddress) => {
     const response = await api.get(`/api/children/${childAddress}`);

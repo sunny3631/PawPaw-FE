@@ -13,6 +13,7 @@ import QuestionMark from "../assets/icons/Question Mark.svg";
 import styled from "styled-components";
 
 import { decodeData } from "../utils/cryption";
+import { child } from "../api/child";
 
 const DashBoard = () => {
   const params = useParams();
@@ -26,6 +27,20 @@ const DashBoard = () => {
   });
   const [vaccinationInformation, setVaccinationInformation] = useState();
   const [medicalHistory, setMedicalHistory] = useState();
+
+  const getChildInfoFromServer = async (childID) => {
+    try {
+      const response = await child.return(childID);
+      if (response.data) {
+        setInformation((prev) => ({
+          ...prev,
+          ...response.data,
+        }));
+      }
+    } catch (error) {
+      console.error("서버 데이터 조회 실패", error);
+    }
+  };
 
   const getInformation = useCallback(async () => {
     if (!window.ethereum) {
@@ -77,6 +92,10 @@ const DashBoard = () => {
     const fetchChildData = async () => {
       try {
         await getInformation();
+
+        if (params.id) {
+          await getChildInfoFromServer(params.id);
+        }
       } catch (error) {
         console.error("데이터 조회 실패:", error);
       }
@@ -85,7 +104,7 @@ const DashBoard = () => {
     if (params.childAddress) {
       fetchChildData();
     }
-  }, [params.childAddress, getInformation]); // params.id가 변경될 때만 실행
+  }, [params.childAddress, params.id, getInformation]); // params.id가 변경될 때만 실행
 
   const routerItem = [
     {
@@ -178,11 +197,10 @@ const DashBoard = () => {
                         {vaccineStatus.minDate}~{vaccineStatus.maxDate}
                         <StatusMessage $status={vaccineStatus.status}>
                           {vaccineStatus.status === "upcoming" &&
-                            "접종시기가 아닙니다"}
-                          {vaccineStatus.status === "due" &&
-                            "현재 접종 가능한 시기입니다"}
+                            "아직 멀었어요."}
+                          {vaccineStatus.status === "due" && "접종 가능해요."}
                           {vaccineStatus.status === "overdue" &&
-                            "접종 시기가 지났습니다"}
+                            "접종 늦었어요."}
                         </StatusMessage>
                       </div>
                     </DateRange>

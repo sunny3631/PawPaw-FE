@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import styled from "styled-components";
 
@@ -194,12 +194,17 @@ const DoseSelect = styled.select`
 
 const SynchronizationVaccination = () => {
   // 자녀 주소 가져오기
-  const location = useLocation();
-  const childAddress = location.state.childAddress;
+  const params = useParams();
   const navigate = useNavigate();
 
   // 백신 정보 업데이트 진행
   const [vaccinations, setVaccinations] = useState([]);
+
+  const childAddress = params.childAddress;
+
+  const cleanVaccineName = (name) => {
+    return name.replace(/\s*-\s*\([12]\)$/, "");
+  };
 
   const api = axios.create({
     baseURL: "http://localhost:8080",
@@ -232,7 +237,10 @@ const SynchronizationVaccination = () => {
 
   const handleVaccineChange = (vaccineName, vaccinationData) => {
     setVaccinations((prev) => {
-      const filtered = prev.filter((v) => v.vaccineName !== vaccineName);
+      const cleanedVaccineName = cleanVaccineName(vaccineName);
+      const filtered = prev.filter(
+        (v) => cleanVaccineName(v.vaccineName) !== cleanedVaccineName
+      );
       return vaccinationData ? [...filtered, vaccinationData] : filtered;
     });
   };
@@ -348,9 +356,8 @@ const SynchronizationVaccination = () => {
       </VaccineList>
       <NextButton
         onClick={async () => {
-          console.log(vaccinations);
-          // await synchronizationVaccinations();
-          // navigate("/");
+          await synchronizationVaccinations();
+          navigate(`/dashboard/${params.childAddress}`);
         }}
       >
         해당사항 체크완료
