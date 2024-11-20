@@ -2,10 +2,9 @@ import React from "react";
 import styled from "styled-components";
 import Check from "../assets/check.svg"
 import Layout from "../components/common/Layout";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-
-
+import Addbutton from "../assets/addbutton.svg"
 const DetailContainer = styled.div`
   padding: 32px;
 
@@ -124,29 +123,53 @@ const Prescription = styled.div`
 
 
 
-const MedicalDetail = ({ name, age, imgUrl, detail }) => {
+const MedicalDetail = ({ name, age, imgUrl }) => {
   const { id } = useParams(); // URL에서 ID 가져오기
   const navigate = useNavigate(); // useNavigate 훅 사용
+  const location = useLocation(); // Link의 state로 전달된 데이터 가져오기
+ // const { item } = location.state || {};
+
   const handleBack = () => {
     navigate(-1); // 이전 페이지로 이동
   };
+  //  // ID에 해당하는 데이터 찾기
+  //  const medical = historyData.find((item) => item.id === parseInt(id, 10));
+  //  const historyData = location.state?.historyData || []; // 전달받은 historyData
+
+// 기본값으로 빈 배열 설정
+const historyData = location.state?.historyData || [];
+
+// historyData가 빈 배열일 경우에 대한 처리
+const medical = historyData.find((item) => item.id === parseInt(id, 10));
+
+if (!medical) {
+  return (
+    <div>
+      데이터를 찾을 수 없습니다.
+      <button onClick={() => navigate(-1)}>돌아가기</button>
+    </div>
+  );
+}
+
+
+
 
   // 상세 데이터 예시
   
-  const medicalDetail = {
-    1: { date : "2024년 10월 19일", symptom: "고열, 두통",  hospital: "행복한 내과",  
-       doctor: "이수민", dianosis : "고열, 두통 증세가 보임, 3일 뒤에 병원 재방문 요망",
-       prescription :  "", feedback : "꼼꼼히 진료를 잘해주셨다." },
-    2: { date : "2024년 10월 15일", symptom: "사랑니 발치",  hospital: "미소 치과",  
-        doctor: "김세종", dianosis : "사랑니 2개 발치함, 3일 뒤에 병원 재방문 요망",
-        prescription :  "", feedback : "꼼꼼히 진료를 잘해주셨다." },
-    3: { date : "2024년 9월 28일", symptom: "급성 위염",  hospital: "급성 위염",  
-        doctor: "박진환", dianosis : "급성 위염 증세가 보임, 3일 뒤에 병원 재방문 요망",
-        prescription :  "", feedback : "꼼꼼히 진료를 잘해주셨다." },
+  // const medicalDetail = {
+  //   1: { date : "2024년 10월 19일", symptom: "고열, 두통",  hospital: "행복한 내과",  
+  //      doctor: "이수민", dianosis : "고열, 두통 증세가 보임, 3일 뒤에 병원 재방문 요망",
+  //      prescription :  "1일 3회 식후 복용", feedback : "꼼꼼히 진료를 잘해주셨다." },
+  //   2: { date : "2024년 10월 15일", symptom: "사랑니 발치",  hospital: "미소 치과",  
+  //       doctor: "김세종", dianosis : "사랑니 2개 발치함, 3일 뒤에 병원 재방문 요망",
+  //       prescription :  "1일 2회 식전 복용", feedback : "꼼꼼히 진료를 잘해주셨다." },
+  //   3: { date : "2024년 9월 28일", symptom: "급성 위염",  hospital: "급성 위염",  
+  //       doctor: "박진환", dianosis : "급성 위염 증세가 보임, 3일 뒤에 병원 재방문 요망",
+  //       prescription :  "1일 2회 식후 복용", feedback : "꼼꼼히 진료를 잘해주셨다." },
    
     
-  };
-  const medical = medicalDetail[id];
+  // };
+  // const medical = medicalDetail[id];
    
 
   return (
@@ -155,7 +178,7 @@ const MedicalDetail = ({ name, age, imgUrl, detail }) => {
         <Header>
           <BackButton onClick = {handleBack}>{"<"}</BackButton>
           <Title>
-            {medical.date} / {medical.symptom}
+            {medical.date} / {medical.symptoms}
           </Title>
         </Header>
 
@@ -166,7 +189,7 @@ const MedicalDetail = ({ name, age, imgUrl, detail }) => {
             </div>
             <div className="name">병원명</div>
           </div>
-          <div className="value">{medical.hospital}</div>
+          <div className="value">{medical.hospitalName}</div>
         </DetailItem>
 
         <DetailItem>
@@ -186,7 +209,7 @@ const MedicalDetail = ({ name, age, imgUrl, detail }) => {
             </div>
             <div className="name">진단 내용</div>
           </div>
-          <div className="value">{medical.dianosis}</div>
+          <div className="value">{medical.diagnosis}</div>
           
         </DetailItem>
 
@@ -197,9 +220,7 @@ const MedicalDetail = ({ name, age, imgUrl, detail }) => {
             </div>
             <div className="name">처방전</div>
           </div>
-          <Prescription>
-            <img src={medical.prescription} alt="처방전 이미지" />
-          </Prescription>
+          <div className="value">{medical.prescription}</div>
         </DetailItem>
 
         <DetailItem>
