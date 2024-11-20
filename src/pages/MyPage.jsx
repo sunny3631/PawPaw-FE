@@ -3,11 +3,12 @@ import Layout from "../components/common/Layout";
 import axios from "axios";
 import styled from "styled-components";
 import Camera from "../assets/icons/Camera.svg";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { child } from "../api/child";
 
 const MyPage = () => {
   const params = useParams();
+  const navigate = useNavigate();
   const [imgUrl, setImgUrl] = useState(""); // 이미지 URL 상태 분리
   const [information, setInformation] = useState({
     name: "",
@@ -15,7 +16,11 @@ const MyPage = () => {
     childaddress: "",
   });
 
+  const defaultImg = "https://i.ibb.co/k8N4d6t/6.png";
+
   useEffect(() => {
+    setImgUrl(defaultImg);
+
     const fetchChildData = async () => {
       try {
         const response = await child.return(params.id);
@@ -85,48 +90,79 @@ const MyPage = () => {
       age={information.age}
       imgUrl={imgUrl} // 분리된 imgUrl 사용
       type="mypage"
+      childAddress={params.childAddress}
     >
       <Container>
-        <TitleWrapper>
-          <Title>마이페이지</Title>
-        </TitleWrapper>
+        <div>
+          <TitleWrapper>
+            <Title>마이페이지</Title>
+          </TitleWrapper>
+          <ImageWrapper>
+            <ProfileImage src={imgUrl} alt="프로필 이미지" />
+            <UpdateImageWrapper>
+              <label htmlFor="profile-upload">
+                <UpdateImage src={Camera} alt="카메라" />
+              </label>
+              <input
+                id="profile-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileInput}
+                style={{ display: "none" }}
+              />
+            </UpdateImageWrapper>
+          </ImageWrapper>
 
-        <ImageWrapper>
-          <ProfileImage src={imgUrl} alt="프로필 이미지" />
-          <UpdateImageWrapper>
-            <label htmlFor="profile-upload">
-              <UpdateImage src={Camera} alt="카메라" />
-            </label>
-            <input
-              id="profile-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleFileInput}
-              style={{ display: "none" }}
-            />
-          </UpdateImageWrapper>
-        </ImageWrapper>
+          <InformationWrapper>
+            <InformationTitle>아이 기본정보</InformationTitle>
+            <InfoContainer>
+              {Object.entries(information).map(([key, value]) => (
+                <InfoItem key={key}>
+                  <InfoLabel>{key}</InfoLabel>
+                  <InfoValue>{value}</InfoValue>
+                </InfoItem>
+              ))}
+            </InfoContainer>
+          </InformationWrapper>
+        </div>
 
-        <InformationWrapper>
-          <InformationTitle>아이 기본정보</InformationTitle>
-          <InfoContainer>
-            {Object.entries(information).map(([key, value]) => (
-              <InfoItem key={key}>
-                <InfoLabel>{key}</InfoLabel>
-                <InfoValue>{value}</InfoValue>
-              </InfoItem>
-            ))}
-          </InfoContainer>
-        </InformationWrapper>
+        <SyncButton
+          onClick={() => {
+            navigate(`/synchronization/vaccine/${params.childAddress}`);
+          }}
+        >
+          백신 동기화
+        </SyncButton>
       </Container>
     </Layout>
   );
 };
 
+const SyncButton = styled.button`
+  width: 100%;
+  height: 50px;
+  background-color: #f9d49b;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: KOTRAHOPE;
+  font-size: 20px;
+  font-weight: 400;
+  color: #4f2304;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
 const Container = styled.div`
   padding: 20px;
   background-color: #ffeccf;
-  min-height: 100vh;
+  height: 100%;
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: space-between;
 `;
 
 const TitleWrapper = styled.div`
@@ -154,6 +190,7 @@ const ImageWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const ProfileImage = styled.img`
@@ -193,6 +230,8 @@ const InformationWrapper = styled.div`
   background: white;
   border-radius: 12px;
   padding: 24px;
+
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const InformationTitle = styled.span`

@@ -1,68 +1,39 @@
 import styled from "styled-components";
 
-const MedicalHistory = () => {
-  const data = [
-    {
-      date: "2024.10.14",
-      hospitalName: "미소 진 산부인과",
-      medicalHistory: "회복 경과 확인",
-      doctor: "김성진",
-    },
-    {
-      date: "2024.10.14",
-      hospitalName: "경 이비인후과",
-      medicalHistory: "급성위염",
-      doctor: "박지현",
-    },
-  ];
-
+const MedicalHistory = ({ medicalHistory }) => {
   return (
-    <Container>
-      <Title>과거 진료 내역</Title>
-      <SubContainer>
-        <HospitalList>
-          {data.map((item, index) => (
-            <HospitalItem key={index}>
-              <Date>{item.date}</Date>
-              <HospitalName>{item.hospitalName}</HospitalName>
-              <MedicalHistoryDetail>
-                · &nbsp; &nbsp; &nbsp;{item.medicalHistory}
-              </MedicalHistoryDetail>
-              <Doctor>{item.doctor}의사</Doctor>
-            </HospitalItem>
-          ))}
-        </HospitalList>
-        <MoreButton>
-          <ButtonText>과거 진료 내역 더보기</ButtonText>
-        </MoreButton>
-      </SubContainer>
-    </Container>
+    <SubContainer>
+      {medicalHistory && medicalHistory.length > 0 ? (
+        <>
+          <HospitalList>
+            {medicalHistory.slice(0, 2).map((item, index) => (
+              <HospitalItem key={index}>
+                <Date>{item.timestamp}</Date>
+                <HospitalName>{item.visitedName}</HospitalName>
+                <MedicalHistoryDetail>
+                  · &nbsp; &nbsp; &nbsp;{item.symptoms}
+                </MedicalHistoryDetail>
+                <Doctor>{item.doctorName}의사</Doctor>
+              </HospitalItem>
+            ))}
+          </HospitalList>
+          <MoreButton>
+            <ButtonText>과거 진료 내역 더보기</ButtonText>
+          </MoreButton>
+        </>
+      ) : (
+        <EmptyMessage>과거 진료 내역이 없습니다</EmptyMessage>
+      )}
+    </SubContainer>
   );
 };
 
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding: 20px;
-`;
-
-const Title = styled.p`
-  font-family: Karla;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 15.2px;
-  text-align: left;
-  margin-left: 15px;
-`;
-
 const SubContainer = styled.div`
-  min-width: 330px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   background-color: #c8dbbe;
   padding: 20px;
-  border-radius: 10px;
 `;
 
 const HospitalList = styled.div`
@@ -130,6 +101,15 @@ const ButtonText = styled.span`
   line-height: 13.96px;
   letter-spacing: -0.13em;
   text-align: left;
+`;
+
+const EmptyMessage = styled.div`
+  font-family: Karla;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #666666;
+  padding: 20px;
 `;
 
 export default MedicalHistory;

@@ -24,6 +24,7 @@ const AddChild = () => {
     weight: "",
   });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,6 +53,7 @@ const AddChild = () => {
   };
 
   const createChild = async () => {
+    setIsLoading(true);
     try {
       if (!window.ethereum) {
         throw Error("MetaMask not install");
@@ -60,6 +62,8 @@ const AddChild = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
+
+      const encrpytedName = encodeData(information.name, signer.address);
 
       const contract = new ethers.Contract(
         process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
@@ -75,7 +79,6 @@ const AddChild = () => {
           .then((network) => network.chainId),
         verifyingContract: contract.target,
       };
-
       const nonce = await contract.getNonce(signer.address);
 
       const types = {
@@ -91,7 +94,7 @@ const AddChild = () => {
 
       const message = {
         parent: signer.address,
-        name: information.name,
+        name: encrpytedName,
         birthDate: toUnixTimestamp(information.birthDate),
         height: formatInformation(information.height),
         weight: formatInformation(information.weight),
@@ -102,7 +105,7 @@ const AddChild = () => {
 
       const response = await metaTxAPI.post("/contract/create", {
         parent: signer.address,
-        childName: information.name,
+        childName: encrpytedName,
         birthDate: toUnixTimestamp(information.birthDate),
         height: formatInformation(information.height),
         weight: formatInformation(information.weight),
@@ -116,22 +119,35 @@ const AddChild = () => {
         );
         const childAddress = createChildEvent.args[1]; // CreateChild 이벤트의 두 번째 인자가 childAddress
 
+        console.log(childAddress);
+
         // 여기서 백엔드 연결하는 코드 작성
         try {
-          const backendResponse = await child.create({
+          const formatDateString = (dateStr) => {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            return `${year}-${month}-${day}`;
+          };
+
+          const backendData = {
             address: childAddress,
-            name: message.childName,
-            birthDate: message.birthDate,
-            height: message.height,
-            weight: message.weight,
-          });
+            name: encrpytedName, // 이미 암호화된 이름 사용
+            birthDate: formatDateString(information.birthDate),
+            height: parseFloat(information.height),
+            weight: parseFloat(information.weight),
+          };
+
+          const backendResponse = await child.create(backendData);
 
           if (backendResponse.data.isSuccess) {
+            setIsLoading(false);
             return { success: true, childAddress };
           } else {
             throw new Error("백엔드 API 호출 에러");
           }
         } catch (error) {
+          setIsLoading(false);
           console.error(error);
           return {
             success: false,
@@ -139,6 +155,7 @@ const AddChild = () => {
         }
       }
 
+      setIsLoading(false);
       return {
         success: false,
       };
@@ -250,7 +267,7 @@ const AddChild = () => {
               }
             }}
           >
-            동기화 할래요.
+            {isLoading ? "처리중..." : "동기화 할래요."}
           </NextButton>
           <NextButton
             onClick={async () => {
@@ -262,7 +279,7 @@ const AddChild = () => {
               }
             }}
           >
-            동기화 안할래요.
+            {isLoading ? "처리중..." : "동기화 안할래요."}
           </NextButton>
         </div>
       )}
