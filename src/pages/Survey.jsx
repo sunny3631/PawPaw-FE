@@ -9,7 +9,12 @@ const Survey = () => {
   const age = "";
   const imgUrl = "";
   return (
-    <Layout name={name} age={age} imgUrl={imgUrl}>
+    <Layout
+      name={name}
+      age={age}
+      imgUrl={imgUrl}
+      childAddress={params.childAddress}
+    >
       <div>문진표 작성하는 곳입니다</div>
     </Layout>
   );
