@@ -1,53 +1,54 @@
 import { useEffect, useState } from "react";
 // import { SurveyText } from "../../";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import Navigation from "../../components/common/Navigation.jsx";
+import SurveyInstruc from "../../img/SurveyInstruc.png";
+import { getSurveyDetail } from "../../api/SurveyApi.jsx";
+import { postSurvey } from "../../api/SurveyApi.jsx";
 
 const SurveyQuestion = () => {
   const navigate = useNavigate(); // 함수 호출로 수정
   const {
-    state,
-    // state = {
-    //   surveyId: 1,
-    //   initialIdx: 0,
-    //   canEdit: true,
-    //   initialScores: new Array(40).fill(0), // 5 * 8
-    // },
+    // state,
+    state = {
+      childId: 1,
+      surveyId: 1,
+      initialIdx: 0,
+      canEdit: true,
+      initialScores: new Array(40).fill(0), // 5 * 8
+    },
   } = useLocation();
+  const params = useParams();
+
+  const [index, setIndex] = useState(state.initialIdx);
+  const [activate, setActivate] = useState();
+  const [scores, setScores] = useState(state.initialScores);
+  const [surveyQuestions, setSurveyQuestions] = useState();
+
+  const scoreBoard = [3, 2, 1, 0];
+
   // const surveyQuestions = SurveyText[state.idx] || [];
 
   // 넘겨줘야할 것들
   // 1. 기설문인지 여부
   // 2. 기설문이라면 기답안들
   // 3. 기설문이라면 현재 인덱스값
-  const [surveyQuestions, setSurveyQuestions] = useState([
-    {
-      question: "엎드려 놓으면 고개를 잠깐 들었다 내린다.",
-      imageUrl: "www.example.com",
-    },
-  ]);
 
   // mock test scores
   useEffect(() => {
-    // debugger;
-    //const data = await axios.getdksadaskdl;askd();
-    //setSurveyQuestions(data);
-    setSurveyQuestions(
-      new Array(40).fill({
-        question: "엎드려 놓으면 고개를 잠깐 들었다 내린다.",
-        imageUrl: "www.example.com",
-      })
-    );
-    setScores(state.initialScores);
-    // console.log(surveyQuestions[state.initialIdx].question);
-  }, []);
-
-  const [index, setIndex] = useState(state.initialIdx);
-  const [activate, setActivate] = useState();
-  const [scores, setScores] = useState(state.initialScores);
-
-  const scoreBoard = [3, 2, 1, 0];
+    const fetchSurveys = async () => {
+      try {
+        const data = await getSurveyDetail(state.surveyId);
+        setSurveyQuestions(data.questions);
+      } catch (error) {
+        console.error("검사 목록 조회 실패:", error);
+      }
+    };
+    if (state.surveyId) {
+      fetchSurveys();
+    }
+  }, [state.surveyId]);
 
   const handleScores = (newEL) => {
     const nextScores = scores.map((el, idx) => (idx === index ? newEL : el));
@@ -55,28 +56,47 @@ const SurveyQuestion = () => {
   };
 
   const submitScores = async () => {
-    if (state.canEdit) await alert("survey Complete." + scores);
+    if (state.canEdit === false) return;
+
+    try {
+      const data = await postSurvey(state.childId, state.surveyId, scores);
+      console.log(data);
+    } catch (error) {
+      console.error("검사 목록 조회 실패:", error);
+    }
     navigate(-1);
-    // api calling~
   };
 
-  if (!surveyQuestions) {
-    return <div>설문을 불러오는 중입니다...</div>;
-  }
+  // if (!surveyQuestions) {
+  //   return <div>설문을 불러오는 중입니다...</div>;
+  // }
 
   return (
     <>
       <LayoutContainer>
         <Header>
           <BackButton onClick={() => navigate(-1)}>←</BackButton>
-          <div className="text">검사지 목록</div>
         </Header>
-        <InformationText>
+        <Information>
           질문 항목에 대해 다음 네 가지 중 하나에 표기해 주십시오.
-        </InformationText>
+          <Instruction>
+            <img src={SurveyInstruc} alt="Instruction" />
+          </Instruction>
+        </Information>
         <Content>
-          <QuestionText>{surveyQuestions[index].question}</QuestionText>
-          {/* {surveyQuestions[index].imageUrl !== null ? <img src=""></img> : null} */}
+          {surveyQuestions ? (
+            <>
+              <QuestionText>{surveyQuestions[index].question}</QuestionText>
+
+              {surveyQuestions[index].imageUrl !== null ? (
+                <img src={surveyQuestions[index].imageUrl} alt="img" />
+              ) : (
+                <></>
+              )}
+            </>
+          ) : (
+            <></>
+          )}
           <ScoreBoard>
             {scoreBoard.map((el) => (
               <ScoreButton
@@ -160,17 +180,19 @@ const Content = styled.div`
 `;
 
 const QuestionText = styled.div`
-  font-size: 18px;
+  font-size: 23px;
   font-weight: semi-bold;
-  margin: 20px 0;
+  text-shadow: 2px 2px 5px rgba(219, 139, 0, 0.3);
+  padding-top: 60px;
+  padding-bottom: 65px;
   text-align: center;
 `;
 
 const ScoreBoard = styled.div`
   display: flex;
   justify-content: space-around;
-  margin-top: 70px;
-  margin-bottom: 40px;
+  padding-top: 130px;
+  margin-bottom: 30px;
 `;
 
 const ScoreButton = styled.button`
@@ -192,7 +214,7 @@ const ScoreButton = styled.button`
 const NavigationButtons = styled.div`
   display: flex;
   justify-content: space-between;
-  margin: 20px 0;
+  padding-top: 10px;
 `;
 
 const NavButton = styled.button`
@@ -219,13 +241,29 @@ const NavigationWrapper = styled.div`
   background-color: #fff;
 `;
 
-const InformationText = styled.div`
+const Information = styled.div`
   margin: 20px;
   display: flex;
-  justify-content: center; /* 가로 가운데 정렬 */
-  align-items: center; /* 세로 가운데 정렬 */
-  font-size: 15px;
-  font-weight: lighter;
+  justify-content: center;
+  align-items: center;
   text-align: center;
-  height: 50px; /* 컨테이너 높이 추가 (필요 시 조정 가능) */
+  height: 50px;
+  display: table-column;
+  font-family: "GmarketSans";
+  font-size: 11px;
+  font-weight: bold;
+`;
+
+const Instruction = styled.div`
+  width: 100%; /* 부모 컨테이너의 크기에 맞춤 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 15px;
+
+  img {
+    width: 350px; /* 이미지 너비 */
+    height: auto; /* 비율 유지 */
+    max-width: 100%; /* 부모 컨테이너에 맞게 크기 제한 */
+  }
 `;

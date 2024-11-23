@@ -15,49 +15,20 @@ const Survey = ({ accessToken }) => {
   const navigate = useNavigate();
 
   const [information, setInformation] = useState({
-    name: "test",
-    age: "22months",
+    name: "",
+    age: "",
     imgUrl: "",
   });
-  const [surveyList, setSurveyList] = useState([
-    {
-      surveyId: 1,
-      title: "발달 선별 검사 1차",
-      minAgeMonths: 4,
-      maxAgeMonths: 5,
-    },
-    {
-      surveyId: 2,
-      title: "발달 선별 검사 2차",
-      minAgeMonths: 6,
-      maxAgeMonths: 7,
-    },
-    {
-      surveyId: 3,
-      title: "발달 선별 검사 3차",
-      minAgeMonths: 8,
-      maxAgeMonths: 9,
-    },
-    {
-      surveyId: 4,
-      title: "발달 선별 검사 4차",
-      minAgeMonths: 10,
-      maxAgeMonths: 11,
-    },
-    {
-      surveyId: 5,
-      title: "발달 선별 검사 5차",
-      minAgeMonths: 12,
-      maxAgeMonths: 13,
-    },
-  ]);
+
+  const [surveyList, setSurveyList] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     // Fetch child information
     const fetchChildData = async () => {
       try {
-        const response = await child.return(params.childAddress);
+        const response = await child.return(params.childId);
+        console.log(params.childId);
 
         if (response.data.isSuccess) {
           setInformation({
@@ -75,28 +46,31 @@ const Survey = ({ accessToken }) => {
     // Fetch survey list
     const fetchSurveys = async () => {
       try {
-        const surveys = await getChildSurveyList(
-          params.childAddress,
-          accessToken
-        );
+        const surveys = await getChildSurveyList(params.childId, accessToken);
+        console.log("Surveys:", surveys); // 데이터를 확인
         setSurveyList(surveys);
       } catch (error) {
-        console.error("검사 목록 조회 실패:", error);
-        setErrorMessage("검사 목록을 불러오는 중 오류가 발생했습니다.");
+        console.error(
+          "API 호출 중 오류 발생:",
+          error.response || error.message
+        );
+        setErrorMessage(
+          error.response?.data?.message || "오류가 발생했습니다."
+        );
       }
     };
-
-    if (params.childAddress) {
+    if (params.childId) {
       fetchChildData();
       fetchSurveys();
     }
-  }, [params.childAddress, accessToken]);
+  }, [params.childId, accessToken]);
 
   const handleSurveyClick = async (surveyId) => {
     try {
-      // const surveyDetail = await getChildSurveyDetail(surveyId, accessToken);
-      // const surveyDetail = {};
-      // console.log("Survey Detail:", surveyDetail);
+      const surveyDetail = await getChildSurveyDetail(surveyId, accessToken);
+
+      console.log("Survey Detail:", surveyDetail);
+
       navigate(`/surveyQuestion`, {
         state: {
           surveyId: surveyId,
@@ -118,25 +92,23 @@ const Survey = ({ accessToken }) => {
       imgUrl={information.imgUrl}
     >
       <S.Container>
-        <S.SurveyTitle>{information.name}의 검사지</S.SurveyTitle>
+        <h2>{information.name}의 검사지</h2>
         {errorMessage && <div>{errorMessage}</div>}
         <S.TestList>
           {surveyList.map((survey) => (
-            <div>
-              <S.TestItem
-                key={survey.id}
-                onClick={() => handleSurveyClick(survey.id)}
-              >
-                <div className="icon">
-                  <img src={SurveyIcon} alt="Icon" />
-                </div>
-                <div>
-                  <div className="title">{survey.title}</div>
-                  <div className="date">검사 일자: {survey.date}</div>
-                </div>
-                <div className="info">{survey.description}</div>
-              </S.TestItem>
-            </div>
+            <S.TestItem
+              key={survey.surveyId}
+              onClick={() => handleSurveyClick(survey.surveyId)}
+            >
+              <div className="icon">
+                <img src={SurveyIcon} alt="Icon" />
+              </div>
+              <div>
+                <div className="title">{survey.title}</div>
+                <div className="date">검사 일자: {survey.surveyDate}</div>
+              </div>
+              <div className="info">{survey.description}</div>
+            </S.TestItem>
           ))}
         </S.TestList>
         <S.SurveyButton onClick={() => navigate("/surveyList")}>

@@ -4,7 +4,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://3.37.62.216",
   headers: {
-    Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0QG5hdmVyLmNvbSIsImF1dGgiOiJST0xFX1VTRVIiLCJleHAiOjE3MzA0NjI1OTV9.aTtksA3d_WjCH1Bs880rtSOlW7C9BvCvm0d3EckI55s`,
+    Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiYXV0aCI6IlJPTEVfVVNFUiIsImV4cCI6MTczMjU0NDcxMX0.ZH_9NZe8f22D9oM7pabCCKCbvG_Hy6lJ23iGx7wTXFY`,
   },
 });
 

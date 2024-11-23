@@ -9,38 +9,7 @@ const SurveyList = () => {
   const navigate = useNavigate();
 
   const [activate, setActivate] = useState();
-  const [surveyList, setSurveyList] = useState([
-    {
-      surveyId: 1,
-      title: "발달 선별 검사 1차",
-      minAgeMonths: 4,
-      maxAgeMonths: 5,
-    },
-    {
-      surveyId: 2,
-      title: "발달 선별 검사 2차",
-      minAgeMonths: 6,
-      maxAgeMonths: 7,
-    },
-    {
-      surveyId: 3,
-      title: "발달 선별 검사 3차",
-      minAgeMonths: 8,
-      maxAgeMonths: 9,
-    },
-    {
-      surveyId: 4,
-      title: "발달 선별 검사 4차",
-      minAgeMonths: 10,
-      maxAgeMonths: 11,
-    },
-    {
-      surveyId: 5,
-      title: "발달 선별 검사 5차",
-      minAgeMonths: 12,
-      maxAgeMonths: 13,
-    },
-  ]);
+  const [surveyList, setSurveyList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -49,7 +18,33 @@ const SurveyList = () => {
     try {
       setLoading(true);
       const data = await getSurveyList();
-      setSurveyList(data);
+      const guraData = [
+        {
+          surveyId: 5,
+          title: "발달 선별 검사 5차",
+          minAgeMonths: 12,
+          maxAgeMonths: 13,
+        },
+        {
+          surveyId: 6,
+          title: "발달 선별 검사 6차",
+          minAgeMonths: 14,
+          maxAgeMonths: 15,
+        },
+        {
+          surveyId: 7,
+          title: "발달 선별 검사 7차",
+          minAgeMonths: 16,
+          maxAgeMonths: 17,
+        },
+        {
+          surveyId: 8,
+          title: "발달 선별 검사 8차",
+          minAgeMonths: 18,
+          maxAgeMonths: 19,
+        },
+      ];
+      setSurveyList(data.concat(guraData));
     } catch (err) {
       setError("데이터를 불러오는데 실패했습니다.");
       console.error(err);
@@ -59,8 +54,8 @@ const SurveyList = () => {
   };
 
   useEffect(() => {
-    // fetchSurveyList();
-    setLoading(false);
+    fetchSurveyList();
+    // setLoading(false);
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -79,7 +74,8 @@ const SurveyList = () => {
               return (
                 <TestItem
                   key={survey.surveyId}
-                  onClick={() =>
+                  onClick={() => {
+                    if (idx > 3) return;
                     navigate("/surveyQuestion", {
                       state: {
                         surveyId: survey.surveyId,
@@ -87,8 +83,8 @@ const SurveyList = () => {
                         canEdit: true,
                         initialScores: new Array(40).fill(0),
                       },
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Card
                     title={survey.title}
@@ -125,24 +121,29 @@ export const Card = ({ title, minAgeMonths, maxAgeMonths, idx }) => {
   );
 };
 
-// 스타일 컴포넌트
 const LayoutContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background-color: #f9f9f9;
+  height: 860px;
+  background-color: #ffeccf;
 `;
 
 const Header = styled.div`
-  padding: 20px;
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+  font-size: 26px;
+  background-color: #f9d49b;
   font-weight: bold;
+  color: #333;
+  height: 120px;
 `;
 
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 20px;
+const BackButton = styled.div`
+  position: absolute;
+  left: 16px;
   cursor: pointer;
 `;
 

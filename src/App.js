@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import DashBoard from "./pages/DashBorad";
 import Survey from "./pages/survey/Survey";
+import SurveyResult from "./pages/survey/SurveyResult";
 import SurveyList from "./pages/survey/SurveyList";
 import SurveyQuestion from "./pages/survey/SurveyQuestion";
 import MyPage from "./pages/MyPage";
@@ -37,9 +38,10 @@ function App() {
             <Route path="/synchronization" element={<SynchronizationChild />} />
 
             <Route path="/dashboard/:childAddress" element={<DashBoard />} />
-            <Route path="/survey" element={<Survey />} />
+            <Route path="/survey/:childAddress" element={<Survey />} />
             <Route path="/surveyList" element={<SurveyList />} />
             <Route path="/surveyQuestion" element={<SurveyQuestion />} />
+            <Route path="/surveyResult" element={<SurveyResult />} />
             <Route path="/mypage/:childAddress" element={<MyPage />} />
             <Route path="/etc/:childAddress" element={<Etc />} />
             {/* <Route
