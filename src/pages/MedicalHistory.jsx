@@ -1,13 +1,14 @@
 import React, {useState} from 'react'
 import Layout from "../components/common/Layout";
-import styled from 'styled-components';
-import Check from "../assets/check.svg"
-import {Link} from "react-router-dom"
-import Addbutton from "../assets/addbutton.svg"
-import AddModal from "../components/AddModal"
+import styled from "styled-components";
+import Check from "../assets/check.svg";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import Addbutton from "../assets/addbutton.svg";
+import AddModal from "../components/AddModal";
 import Arrow from "../assets/arrow.svg"
-import { useNavigate } from "react-router-dom"; // import 추가
+import { ethers } from "ethers";
 
+import abi from "../abi/ParentChildRelationshipWithMeta.json";
 
   /* 스타일 컴포넌트 */
   const Container = styled.div`
@@ -43,7 +44,6 @@ import { useNavigate } from "react-router-dom"; // import 추가
     color: #4a4343;
     width : 100px;
   `;
-
 
   const Record = styled.div`
     //padding: 10px 0;
@@ -299,7 +299,8 @@ const ArrowIcon = styled.img`
 margin-left: 5px;
 `;
 
-const MedicalHistory = ({ name, age, imgUrl }) => {
+const MedicalHistory = () => {
+  const params = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("hospital"); // 현재 선택된 탭 상태
   const navigate = useNavigate(); // useNavigate 훅 사용
@@ -340,7 +341,12 @@ const MedicalHistory = ({ name, age, imgUrl }) => {
     setSortOrder(order);
     setIsDropdownOpen(false);
   };
-
+  
+  // 정렬 함수
+  const sortedData =
+    sortOrder === "최신순"
+      ? [...historyData].sort((a, b) => parseDate(b.date) - parseDate(a.date))
+      : [...historyData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
   
     // 진료 내역 샘플 데이터

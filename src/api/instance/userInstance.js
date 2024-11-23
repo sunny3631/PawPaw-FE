@@ -2,7 +2,7 @@ import axios from "axios";
 import { userAuth } from "../login";
 
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: "http://3.37.62.216",
 });
 
 // 서버로 요청을 보내기 전에 JWT 자동 추가

@@ -5,19 +5,19 @@ import { useNavigate } from "react-router-dom";
 import { userAuth } from "../api/login";
 
 const Login = () => {
-  const { connectWallet, walletAddress } = useWallet();
+  const { connectWallet } = useWallet();
   const navigate = useNavigate();
 
   const onClickWallet = async () => {
     try {
-      const isConnected = await connectWallet();
+      const { success, address } = await connectWallet();
 
-      if (!isConnected) {
+      if (!success) {
         alert("메타마스크와 연결이 되지 않습니다.");
         return;
       }
 
-      if (!walletAddress) {
+      if (!address) {
         alert("지갑 주소를 가져올 수 없습니다.");
         return;
       }
@@ -26,7 +26,7 @@ const Login = () => {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
 
-      const response = await userAuth.login({ address: walletAddress });
+      const response = await userAuth.login({ address: address });
 
       if (!response?.data?.isSuccess) {
         throw new Error(response?.data?.message || "로그인에 실패했습니다.");

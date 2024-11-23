@@ -54,16 +54,26 @@ const useWallet = () => {
         const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
         });
-        setWalletAddress(accounts[0]);
+        const address = accounts[0];
+        setWalletAddress(address);
         setIsWalletConnected(true);
-        return true;
+        return {
+          success: true,
+          address,
+        };
       } catch (error) {
         console.log(error);
-        return false;
+        return {
+          success: false,
+          address: null,
+        };
       }
     } else {
       console.log("Web3 is not initalized");
-      return false;
+      return {
+        success: false,
+        address: null,
+      };
     }
   };
 

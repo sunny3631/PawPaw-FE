@@ -54,7 +54,10 @@ function App() {
               path="/vaccination/detail/:id"
               element={<VaccinationDetail />}
             />
-            <Route path="/medicalhistory" element={<MedicalHistory />} />
+            <Route
+              path="/medicalhistory/:childAddress/:id"
+              element={<MedicalHistory />}
+            />
             <Route path="/details/:id" element={<MedicalHistoryDetail />} />
           </Routes>
         </Router>

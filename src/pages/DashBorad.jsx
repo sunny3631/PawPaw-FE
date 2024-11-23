@@ -12,35 +12,19 @@ import QuestionMark from "../assets/icons/Question Mark.svg";
 
 import styled from "styled-components";
 
-import { decodeData } from "../utils/cryption";
-import { child } from "../api/child";
-
 const DashBoard = () => {
   const params = useParams();
   const navigate = useNavigate();
 
-  const [information, setInformation] = useState({
-    name: "",
-    birthDate: "",
-    imgUrl: "",
-    parentAddress: "",
-  });
+  const [childInformation, setChildInformation] = useState();
   const [vaccinationInformation, setVaccinationInformation] = useState();
   const [medicalHistory, setMedicalHistory] = useState();
 
-  const getChildInfoFromServer = async (childID) => {
-    try {
-      const response = await child.return(childID);
-      if (response.data) {
-        setInformation((prev) => ({
-          ...prev,
-          ...response.data,
-        }));
-      }
-    } catch (error) {
-      console.error("서버 데이터 조회 실패", error);
-    }
-  };
+  const [isLoading, setIsLoading] = useState({
+    child: true,
+    vaccination: true,
+    medical: true,
+  });
 
   const getInformation = useCallback(async () => {
     if (!window.ethereum) {
@@ -58,7 +42,6 @@ const DashBoard = () => {
       signer
     );
 
-    // 자녀 정보 가져오기
     const childInformation = await contract.returnChildInformation();
     if (childInformation && childInformation.length > 0) {
       const currentChild = childInformation.find(
@@ -66,14 +49,12 @@ const DashBoard = () => {
       );
 
       if (currentChild) {
-        setInformation({
-          name: currentChild.name,
+        setChildInformation({
           birthDate: new Date(
             Number(currentChild.birthDate) * 1000
-          ).toLocaleDateString(), // Unix timestamp를 날짜로 변환
-          imgUrl: currentChild.imgUrl || "", // imgUrl이 있다면 사용, 없다면 빈 문자열
-          parentAddress: signer.address,
+          ).toLocaleDateString(),
         });
+        setIsLoading((prev) => ({ ...prev, child: true }));
       }
     }
 
@@ -81,21 +62,19 @@ const DashBoard = () => {
       params.childAddress
     );
     setVaccinationInformation(vaccinationInformation);
+    setIsLoading((prev) => ({ ...prev, vaccination: true }));
 
     const medicalHistory = await contract.returnMedicalHistoriesForChild(
       params.childAddress
     );
     setMedicalHistory(medicalHistory);
+    setIsLoading((prev) => ({ ...prev, medical: true }));
   }, [params.childAddress]);
 
   useEffect(() => {
     const fetchChildData = async () => {
       try {
         await getInformation();
-
-        if (params.id) {
-          await getChildInfoFromServer(params.id);
-        }
       } catch (error) {
         console.error("데이터 조회 실패:", error);
       }
@@ -114,7 +93,7 @@ const DashBoard = () => {
     },
     {
       name: "진료\n기록하기",
-      router: "/medicalhistory",
+      router: `/medicalhistory/${params.childAddress}/${params.id}`,
       img: Edit,
     },
     {
@@ -153,12 +132,7 @@ const DashBoard = () => {
   };
 
   return (
-    <Layout
-      name={decodeData(information.name, information.parentAddress)}
-      age={information.age}
-      imgUrl={information.imgUrl} // profile -> imgUrl로 수정
-      childAddress={params.childAddress}
-    >
+    <Layout childID={params.id} childAddress={params.childAddress}>
       <GridContainer>
         {routerItem.map((item, index) => (
           <MenuItem
@@ -175,12 +149,17 @@ const DashBoard = () => {
         ))}
       </GridContainer>
       <Title>예방 접종 예정일</Title>
-      {vaccinationInformation && (
+      {!isLoading.vaccination ? (
+        <LoadingContainer>
+          <LoadingSpinner />
+          <LoadingText>예방접종 정보를 불러오는 중...</LoadingText>
+        </LoadingContainer>
+      ) : vaccinationInformation ? (
         <VaccineContainer>
           <VaccineScrollContainer>
             {vaccinationInformation[1].slice(0, 5).map((vaccine, index) => {
               const vaccineStatus = calculateVaccineStatus(
-                information.birthDate,
+                childInformation?.birthDate,
                 Number(vaccine[4]),
                 Number(vaccine[5])
               );
@@ -188,33 +167,31 @@ const DashBoard = () => {
                 <VaccineCard key={index}>
                   <VaccineDetail>
                     <DateRange>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                        }}
-                      >
-                        {vaccineStatus.minDate}~{vaccineStatus.maxDate}
+                      <div>
+                        {vaccineStatus.minDate} ~ {vaccineStatus.maxDate}
                         <StatusMessage $status={vaccineStatus.status}>
                           {vaccineStatus.status === "upcoming" &&
-                            "아직 멀었어요."}
-                          {vaccineStatus.status === "due" && "접종 가능해요."}
+                            "아직 멀었어요"}
+                          {vaccineStatus.status === "due" && "접종 가능해요"}
                           {vaccineStatus.status === "overdue" &&
-                            "접종 늦었어요."}
+                            "접종 늦었어요"}
                         </StatusMessage>
                       </div>
                     </DateRange>
-                    <div>
+                    <VaccineInfo>
                       ({vaccine[1]}) {vaccine[2]} {Number(vaccine[3])}차
                       예방접종
-                    </div>
+                    </VaccineInfo>
                   </VaccineDetail>
                 </VaccineCard>
               );
             })}
           </VaccineScrollContainer>
         </VaccineContainer>
+      ) : (
+        <NoDataContainer>예방접종 정보가 없습니다.</NoDataContainer>
       )}
+
       <Title
         style={{
           marginTop: "20px",
@@ -222,10 +199,66 @@ const DashBoard = () => {
       >
         과거 진료 내역
       </Title>
-      <MedicalHistory medicalHistory={medicalHistory} />
+      {!isLoading.medical ? (
+        <LoadingContainer>
+          <LoadingSpinner />
+          <LoadingText>진료 기록을 불러오는 중...</LoadingText>
+        </LoadingContainer>
+      ) : (
+        <MedicalHistory medicalHistory={medicalHistory} />
+      )}
     </Layout>
   );
 };
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  margin: 20px;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #9f8772;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const LoadingText = styled.div`
+  font-family: "Gmarket Sans TTF";
+  font-size: 16px;
+  color: #666;
+`;
+
+const NoDataContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #f5f5f5;
+  border-radius: 12px;
+  margin: 20px;
+  font-family: "Gmarket Sans TTF";
+  font-size: 16px;
+  color: #666;
+`;
 
 // 전체 그리드를 감싸는 컨테이너
 const GridContainer = styled.div`
@@ -246,6 +279,7 @@ const MenuItem = styled.div`
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 // 아이콘 컨테이너
@@ -291,79 +325,137 @@ const Title = styled.div`
 
 const VaccineContainer = styled.div`
   width: 100%;
-  padding: 25px;
-  background: #9f8772e5;
+  background: transparent;
 `;
 
 const VaccineScrollContainer = styled.div`
   display: flex;
   overflow-x: auto;
-  scroll-snap-type: x mandatory; // 스크롤 스냅 추가
+  gap: 20px;
+  padding: 10px 5px;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
   }
+
+  &::after,
+  &::before {
+    content: "";
+    min-width: 10px;
+  }
 `;
 
 const VaccineCard = styled.div`
-  min-width: 100%; // 전체 너비로 설정
-  flex: 0 0 100%; // 카드가 늘어나거나 줄어들지 않도록 설정
-  scroll-snap-align: start; // 스크롤 시 카드 시작 부분에 맞춤
-  box-sizing: border-box; // 패딩이 너비에 포함되도록 설정
+  min-width: calc(100% - 40px);
+  scroll-snap-align: center;
+  background: #ffeccf;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(159, 135, 114, 0.15);
+  padding: 20px;
+  transform-origin: center center;
+  transition: all 0.3s ease;
+  position: relative;
+  border: 1px solid rgba(159, 135, 114, 0.1);
 
-  &:first-child {
-    margin-left: 16px;
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(159, 135, 114, 0.2);
   }
 
-  &:last-child {
-    margin-right: 16px;
+  &:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  animation: slideIn 0.5s ease-out forwards;
+  opacity: 0;
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
 `;
 
 const VaccineDetail = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  font-family: Karla;
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 28.06px;
-  letter-spacing: -0.02em;
-  text-align: left;
-
-  color: #ffffff;
-
   gap: 15px;
+  position: relative;
 `;
 
 const DateRange = styled.div`
-  font-family: Gmarket Sans TTF;
-  font-size: 20px;
+  font-family: "Gmarket Sans TTF";
+  font-size: 18px;
   font-weight: 500;
-  line-height: 17.25px;
-  letter-spacing: -0.02em;
-  text-align: left;
-  text-underline-position: from-font;
-  text-decoration-skip-ink: none;
+  color: #4f2304;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 12px 15px;
+  border-radius: 12px;
 
-  color: #ffffff;
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+`;
+
+const VaccineInfo = styled.div`
+  font-family: "Karla";
+  font-size: 18px;
+  font-weight: 600;
+  color: #4f2304;
+  padding: 10px 0;
+  border-top: 1px solid rgba(79, 35, 4, 0.1);
 `;
 
 const StatusMessage = styled.div`
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  display: inline-block;
+  background: ${({ $status }) => {
+    switch ($status) {
+      case "overdue":
+        return "rgba(204, 61, 61, 0.1)";
+      case "due":
+        return "rgba(79, 35, 4, 0.1)";
+      default:
+        return "rgba(128, 128, 128, 0.1)";
+    }
+  }};
   color: ${({ $status }) => {
     switch ($status) {
       case "overdue":
         return "#CC3D3D";
       case "due":
-        return "#00FF00";
+        return "#4F2304";
       default:
-        return "#808080";
+        return "#666666";
     }
   }};
+  border: 1px solid
+    ${({ $status }) => {
+      switch ($status) {
+        case "overdue":
+          return "rgba(204, 61, 61, 0.2)";
+        case "due":
+          return "rgba(79, 35, 4, 0.2)";
+        default:
+          return "rgba(128, 128, 128, 0.2)";
+      }
+    }};
 `;
 
 export default DashBoard;

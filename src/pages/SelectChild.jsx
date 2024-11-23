@@ -79,27 +79,27 @@ const SelectChild = () => {
         (item) => item.name === childInfo.name
       );
 
-      // 자녀를 조회했는데 없다면
-      if (!existingChild) {
-        const newChildData = {
-          address: childInfo[0],
-          name: childInfo.name,
-          birthDate: formatUnixTimestampToYYYYMMDD(Number(childInfo[2])),
-          height: Number(childInfo.height || 0),
-          weight: Number(childInfo.weight || 0),
-        };
-
-        const response = await child.create(newChildData);
-
+      if (existingChild) {
+        // 기존 자녀가 있는 경우 해당 자녀의 id 반환
         return {
           success: true,
-          id: response.data.id,
+          id: existingChild.id,
         };
       }
 
+      const newChildData = {
+        address: childInfo[0],
+        name: childInfo.name,
+        birthDate: formatUnixTimestampToYYYYMMDD(Number(childInfo[2])),
+        height: Number(childInfo.height || 0),
+        weight: Number(childInfo.weight || 0),
+      };
+
+      const createResponse = await child.create(newChildData);
+
       return {
         success: true,
-        id: response.data.id,
+        id: createResponse.data.result.id,
       };
     } catch (error) {
       console.error(error);
@@ -135,57 +135,115 @@ const SelectChild = () => {
           동기화 하기
         </TopBarButton>
       </TopBar>
-      <SelectContainer>
-        <Title>아이의 프로필을 선택해주세요</Title>
-        <GridContainer>
-          {children.map((child, index) => (
+      <ContentWrapper>
+        <SelectContainer>
+          <Title>아이의 프로필을 선택해주세요</Title>
+          <GridContainer>
+            {children.map((child, index) => (
+              <ProfileBox
+                key={index}
+                onClick={async () => {
+                  const { success, id } = await verifyAndCreateChild(child);
+                  console.log(success, id);
+                  if (success) {
+                    navigate(`/dashboard/${children[index]["0"]}/${id}`);
+                  }
+                }}
+              >
+                <ProfileImage
+                  src={child.imgUrl || defaultImage}
+                  alt="profile"
+                />
+                <ProfileName>{child.name || "Unknown"}</ProfileName>
+              </ProfileBox>
+            ))}
             <ProfileBox
-              key={index}
-              onClick={async () => {
-                // 여기서 백엔드에서 데이터를 조회 하였을 떄 자녀가 있으면 자녀에 대한 정보를 먼저 추가하고 난 이후에 개발을 진행하는 것으로 함
-                const { success, id } = await verifyAndCreateChild(child);
-                if (success) {
-                  navigate(`/dashboard/${children[index]["0"]}/${id}`);
-                }
-                // navigate(`/dashboard/${children[index]["0"]}`);
+              onClick={() => {
+                navigate("/addChild");
               }}
             >
-              <ProfileImage src={child.imgUrl || defaultImage} alt="profile" />
-              <ProfileName>{child.name || "Unknown"}</ProfileName>
+              <ProfileImage src={addImage} alt="add profile" />
+              <ProfileName>추가</ProfileName>
             </ProfileBox>
-          ))}
-          <ProfileBox
-            onClick={() => {
-              navigate("/addChild");
-            }}
-          >
-            <ProfileImage src={addImage} alt="add profile" />
-            <ProfileName>추가</ProfileName>
-          </ProfileBox>
-        </GridContainer>
-      </SelectContainer>
+          </GridContainer>
+        </SelectContainer>
+      </ContentWrapper>
     </Container>
   );
 };
 
 const Container = styled.div`
-  display: flex;
+  position: relative;
   width: 100%;
-  height: 100vh;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  min-height: 100vh;
   background-color: #ffcc80;
+  display: flex;
+  flex-direction: column;
 `;
 
 const TopBar = styled.div`
   width: 100%;
   padding: 20px;
-  position: absolute;
-  top: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+`;
+
+const ContentWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+`;
+
+const SelectContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+  width: 100%;
+  max-width: 600px;
+`;
+
+const Title = styled.span`
+  font-family: Karla;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 23.38px;
+  text-align: left;
+`;
+
+const GridContainer = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 300px;
+`;
+
+const ProfileBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+`;
+
+const ProfileImage = styled.img`
+  width: 126px;
+  height: 126px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+`;
+
+const ProfileName = styled.span`
+  margin-top: 8px;
+  font-family: Karla;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 23.38px;
+  text-align: left;
 `;
 
 const TopBarTitle = styled.span`
@@ -210,53 +268,6 @@ const TopBarButton = styled.button`
   padding: 0;
   margin: 0;
   cursor: pointer;
-`;
-
-const SelectContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 50px;
-`;
-
-const Title = styled.span`
-  font-family: Karla;
-  font-size: 20px;
-  font-weight: 800;
-  line-height: 23.38px;
-  text-align: left;
-`;
-
-const GridContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 20px;
-  width: 100%;
-  max-width: 300px; /* Adjust based on design */
-`;
-
-const ProfileBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-`;
-
-const ProfileImage = styled.img`
-  width: 126px;
-  height: 126px;
-  border-radius: 8px;
-  background-color: #f0f0f0;
-`;
-
-const ProfileName = styled.span`
-  margin-top: 8px;
-  font-family: Karla;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 23.38px;
-  text-align: left;
 `;
 
 export default SelectChild;
