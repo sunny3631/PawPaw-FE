@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import Layout from "../components/common/Layout";
 import styled from "styled-components";
 import Check from "../assets/check.svg";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Addbutton from "../assets/addbutton.svg";
 import AddModal from "../components/AddModal";
+import { ethers } from "ethers";
+
+import abi from "../abi/ParentChildRelationshipWithMeta.json";
 
 /* 스타일 컴포넌트 */
 const Container = styled.div`
@@ -236,7 +239,8 @@ const SubmitButton = styled.button`
   }
 `;
 
-const MedicalHistory = ({ name, age, imgUrl }) => {
+const MedicalHistory = () => {
+  const params = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("hospital"); // 현재 선택된 탭 상태
 
@@ -287,8 +291,57 @@ const MedicalHistory = ({ name, age, imgUrl }) => {
       ? [...historyData].sort((a, b) => parseDate(b.date) - parseDate(a.date))
       : [...historyData].sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
+  const addMedicalHistory = async () => {
+    try {
+      if (!window.ethereum) {
+        throw Error("MetaMask not install");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+
+      // 데이터 암호화
+
+      const contract = new ethers.Contract(
+        process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
+        abi.abi,
+        provider
+      );
+
+      const domain = {
+        name: "ParentChildRelationshipWithMeta",
+        version: "1",
+        chainId: await signer.provider
+          .getNetwork()
+          .then((network) => network.target),
+        verifyingContract: contract.target,
+      };
+
+      const nonce = await contract.getNonce(signer.address);
+
+      const types = {
+        AddMedicalHistory: [
+          { name: "parent", type: "address" },
+          { name: "childAddress", type: "address" },
+          { name: "medicalType", type: "uint8" },
+          { name: "visitedName", type: "string" },
+          { name: "timestamp", type: "string" },
+          { name: "doctorName", type: "string" },
+          { name: "symptoms", type: "string" },
+          { name: "diagnosisDetails", type: "string" },
+          { name: "nonce", type: "uint256" },
+        ],
+      };
+
+      const message = {
+        parent: signer.address,
+      };
+    } catch (error) {}
+  };
+
   return (
-    <Layout name={name} age={age} imgUrl={imgUrl}>
+    <Layout childAddress={params.childAddress} childID={params.id}>
       <Container>
         <Header>
           <h1>진료내역</h1>
