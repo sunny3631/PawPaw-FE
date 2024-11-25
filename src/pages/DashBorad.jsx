@@ -16,14 +16,15 @@ const DashBoard = () => {
   const params = useParams();
   const navigate = useNavigate();
 
+  const [parentAddress, setParentAddress] = useState();
   const [childInformation, setChildInformation] = useState();
   const [vaccinationInformation, setVaccinationInformation] = useState();
   const [medicalHistory, setMedicalHistory] = useState();
 
   const [isLoading, setIsLoading] = useState({
-    child: true,
-    vaccination: true,
-    medical: true,
+    child: false,
+    vaccination: false,
+    medical: false,
   });
 
   const getInformation = useCallback(async () => {
@@ -36,15 +37,22 @@ const DashBoard = () => {
     await provider.send("eth_requestAccounts", []);
     const signer = await provider.getSigner();
 
+    setParentAddress(signer.address);
+
     const contract = new ethers.Contract(
       process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
       ParentChildRelationshipABI.abi,
       signer
     );
 
-    const childInformation = await contract.returnChildInformation();
-    if (childInformation && childInformation.length > 0) {
-      const currentChild = childInformation.find(
+    const [childInfo, vaccineInfo, medicalInfo] = await Promise.all([
+      contract.returnChildInformation(),
+      contract.returnChildVaccinationStatus(params.childAddress),
+      contract.returnMedicalHistoriesForChild(params.childAddress),
+    ]);
+
+    if (childInfo && childInfo.length > 0) {
+      const currentChild = childInfo.find(
         (child) => child.childAddress === params.childAddress
       );
 
@@ -54,29 +62,39 @@ const DashBoard = () => {
             Number(currentChild.birthDate) * 1000
           ).toLocaleDateString(),
         });
-        setIsLoading((prev) => ({ ...prev, child: true }));
       }
     }
 
-    const vaccinationInformation = await contract.returnChildVaccinationStatus(
-      params.childAddress
-    );
-    setVaccinationInformation(vaccinationInformation);
-    setIsLoading((prev) => ({ ...prev, vaccination: true }));
+    setVaccinationInformation(vaccineInfo);
+    setMedicalHistory(medicalInfo);
 
-    const medicalHistory = await contract.returnMedicalHistoriesForChild(
-      params.childAddress
-    );
-    setMedicalHistory(medicalHistory);
-    setIsLoading((prev) => ({ ...prev, medical: true }));
+    // 마지막에 한 번만 로딩 상태 업데이트
+    setIsLoading({
+      child: true,
+      vaccination: true,
+      medical: true,
+    });
   }, [params.childAddress]);
 
   useEffect(() => {
     const fetchChildData = async () => {
+      setIsLoading({
+        // 데이터 로딩 시작 시 상태 업데이트
+        child: false,
+        vaccination: false,
+        medical: false,
+      });
+
       try {
         await getInformation();
       } catch (error) {
         console.error("데이터 조회 실패:", error);
+        setIsLoading({
+          // 에러 발생 시 로딩 완료 처리
+          child: true,
+          vaccination: true,
+          medical: true,
+        });
       }
     };
 
@@ -88,7 +106,7 @@ const DashBoard = () => {
   const routerItem = [
     {
       name: "예방접종\n확인하기",
-      router: `/vaccination/${params.childAddress}`,
+      router: `/vaccination/${params.childAddress}/${params.id}`,
       img: Search,
     },
     {
@@ -98,7 +116,7 @@ const DashBoard = () => {
     },
     {
       name: "발달검사\n받으러가기",
-      router: `/survey/${params.childAddress}`,
+      router: `/survey/${params.childAddress}/${params.id}`,
       img: Treatment,
     },
     {
@@ -192,20 +210,17 @@ const DashBoard = () => {
         <NoDataContainer>예방접종 정보가 없습니다.</NoDataContainer>
       )}
 
-      <Title
-        style={{
-          marginTop: "20px",
-        }}
-      >
-        과거 진료 내역
-      </Title>
+      <Title>과거 진료 내역</Title>
       {!isLoading.medical ? (
         <LoadingContainer>
           <LoadingSpinner />
           <LoadingText>진료 기록을 불러오는 중...</LoadingText>
         </LoadingContainer>
       ) : (
-        <MedicalHistory medicalHistory={medicalHistory} />
+        <MedicalHistory
+          medicalHistory={medicalHistory}
+          address={parentAddress}
+        />
       )}
     </Layout>
   );
@@ -268,11 +283,12 @@ const GridContainer = styled.div`
   padding: 16px;
   max-width: 600px;
   margin: 0 auto;
+  margin-top: 10px;
 `;
 
 // 각 메뉴 아이템을 위한 스타일
 const MenuItem = styled.div`
-  background-color: #dbdee6cc;
+  background-color: rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -280,6 +296,16 @@ const MenuItem = styled.div`
   justify-content: space-between;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(210, 165, 125, 0.25);
+    background: linear-gradient(135deg, #ffe7cc 0%, #ffd8a9 100%);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 
 // 아이콘 컨테이너
@@ -289,6 +315,9 @@ const IconContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  padding: 8px;
 
   img {
     width: 100%;
@@ -305,10 +334,6 @@ const MenuText = styled.span`
   line-height: 1.4;
   color: #6a5555;
   font-family: Gmarket Sans TTF;
-  line-height: 23px;
-  text-align: left;
-  text-underline-position: from-font;
-  text-decoration-skip-ink: none;
 `;
 
 const Title = styled.div`
@@ -332,7 +357,7 @@ const VaccineScrollContainer = styled.div`
   display: flex;
   overflow-x: auto;
   gap: 20px;
-  padding: 10px 5px;
+  padding: 0px 5px;
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
@@ -352,7 +377,7 @@ const VaccineScrollContainer = styled.div`
 const VaccineCard = styled.div`
   min-width: calc(100% - 40px);
   scroll-snap-align: center;
-  background: #ffeccf;
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(159, 135, 114, 0.15);
   padding: 20px;
@@ -395,7 +420,7 @@ const VaccineDetail = styled.div`
 
 const DateRange = styled.div`
   font-family: "Gmarket Sans TTF";
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   color: #4f2304;
   background: rgba(255, 255, 255, 0.7);
@@ -411,7 +436,7 @@ const DateRange = styled.div`
 `;
 
 const VaccineInfo = styled.div`
-  font-family: "Karla";
+  font-family: Karla;
   font-size: 18px;
   font-weight: 600;
   color: #4f2304;

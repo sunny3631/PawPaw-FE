@@ -47,18 +47,21 @@ function App() {
             <Route path="/mypage/:childAddress/:id" element={<MyPage />} />
             <Route path="/etc/:childAddress/:id" element={<Etc />} />
             <Route
-              path="/vaccination/:childAddress"
+              path="/vaccination/:childAddress/:id"
               element={<Vaccination />}
             />
             <Route
-              path="/vaccination/detail/:id"
+              path="/vaccination/detail/:childAddress/:childID/:id"
               element={<VaccinationDetail />}
             />
             <Route
               path="/medicalhistory/:childAddress/:id"
               element={<MedicalHistory />}
             />
-            <Route path="/details/:id" element={<MedicalHistoryDetail />} />
+            <Route
+              path="/medicalHistory/details/:childAddress/:childID/:id"
+              element={<MedicalHistoryDetail />}
+            />
           </Routes>
         </Router>
       </RecoilRoot>

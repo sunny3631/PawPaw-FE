@@ -4,12 +4,48 @@ import PeopleIcon from "@mui/icons-material/People";
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import styled from "styled-components";
+
+// 커스텀 스타일드 컴포넌트로 BottomNavigation 래핑
+const StyledBottomNavigation = styled(BottomNavigation)`
+  && {
+    background: linear-gradient(to top, #fff6e9, #ffffff);
+    border-top: 1px solid rgba(210, 165, 125, 0.2);
+    box-shadow: 0 -4px 12px rgba(210, 165, 125, 0.1);
+  }
+`;
+
+// 커스텀 스타일드 컴포넌트로 BottomNavigationAction 래핑
+const StyledBottomNavigationAction = styled(BottomNavigationAction)`
+  && {
+    color: rgba(79, 35, 4, 0.4);
+    padding: 12px 0;
+    min-width: 80px;
+    transition: all 0.3s ease;
+
+    &.Mui-selected {
+      color: #4f2304;
+    }
+
+    .MuiSvgIcon-root {
+      transition: all 0.3s ease;
+    }
+
+    &:hover {
+      color: #4f2304;
+      background: rgba(255, 231, 204, 0.3);
+
+      .MuiSvgIcon-root {
+        transform: translateY(-2px);
+      }
+    }
+  }
+`;
 
 const Navigation = ({ activate, setActivate, childAddress, childID }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // URL 경로와 활성 상태 동기화
   useEffect(() => {
     if (location.pathname.includes("/dashboard")) {
       setActivate(1);
@@ -53,29 +89,26 @@ const Navigation = ({ activate, setActivate, childAddress, childID }) => {
   };
 
   return (
-    <BottomNavigation
+    <StyledBottomNavigation
       value={activate}
       onChange={handleChange}
       sx={{
         width: "100%",
         position: "fixed",
         bottom: 0,
-        backgroundColor: "#fff",
+        height: "64px", // 네비게이션 높이 조정
       }}
     >
       {menu.map((item) => (
-        <BottomNavigationAction
+        <StyledBottomNavigationAction
           key={item.id}
           icon={item.icon}
           value={item.id}
-          sx={{
-            color: activate === item.id ? "#000" : "#D6D9DD",
-            "&.Mui-selected": { color: "#000" },
-          }}
           onClick={() => navigate(`${item.router}`)}
+          label={item.menuNameKor} // 메뉴 이름 표시 추가
         />
       ))}
-    </BottomNavigation>
+    </StyledBottomNavigation>
   );
 };
 
