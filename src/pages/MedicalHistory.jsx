@@ -377,6 +377,18 @@ const MedicalHistory = () => {
   const closeModal = () => {
     setIsModalOpen(false);
   };
+  // const [formData, setFormData] = useState({
+  //   hospitalName: "",
+  //   date: "",
+  //   doctor: "",
+  //   symptoms: "",
+  //   diagnosis: "",
+  //   prescription: "",
+  //   feedback: "",
+  //   pharmacyName: "",
+  //   prescriptionDate: "",
+  //   dosage: "",
+  // });
 
   const initialFormData = useMemo(
     () => ({

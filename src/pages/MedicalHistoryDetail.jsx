@@ -275,6 +275,27 @@ const MedicalDetail = () => {
   const handleBack = () => {
     navigate(-1);
   };
+  //  // ID에 해당하는 데이터 찾기
+  //  const medical = historyData.find((item) => item.id === parseInt(id, 10));
+  //  const historyData = location.state?.historyData || []; // 전달받은 historyData
+
+// 기본값으로 빈 배열 설정
+// const historyData = location.state?.historyData || [];
+
+// // historyData가 빈 배열일 경우에 대한 처리
+// const medical = historyData.find((item) => item.id === parseInt(id, 10));
+
+if (!medical) {
+  return (
+    <div>
+      데이터를 찾을 수 없습니다.
+      <button onClick={() => navigate(-1)}>돌아가기</button>
+    </div>
+  );
+}
+
+
+
 
   if (!medical) {
     return (

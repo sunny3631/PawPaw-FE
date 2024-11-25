@@ -261,4 +261,13 @@ const EmptyText = styled.p`
   margin: 0;
 `;
 
+const EmptyMessage = styled.div`
+  font-family: Karla;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  color: #666666;
+  padding: 20px;
+`;
+
 export default MedicalHistory;

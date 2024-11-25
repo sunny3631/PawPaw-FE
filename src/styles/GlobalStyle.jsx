@@ -10,6 +10,13 @@ const GlobalStyles = createGlobalStyle`
   font-weight: normal;
   font-style: normal;
 }
+
+@font-face {
+    font-family: 'GmarketSans';
+    src: url('/fonts/GmarketSansTTFMedium.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
     
 body {
   margin: 0;

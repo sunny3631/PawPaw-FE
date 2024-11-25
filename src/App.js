@@ -3,7 +3,10 @@ import MainPage from "./pages/MainPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { RecoilRoot } from "recoil";
 import DashBoard from "./pages/DashBorad";
-import Survey from "./pages/Survey";
+import Survey from "./pages/survey/Survey";
+import SurveyResult from "./pages/survey/SurveyResult";
+import SurveyList from "./pages/survey/SurveyList";
+import SurveyQuestion from "./pages/survey/SurveyQuestion";
 import MyPage from "./pages/MyPage";
 import Etc from "./pages/Etc";
 import GlobalStyles from "./styles/GlobalStyle";
@@ -13,7 +16,7 @@ import SelectChild from "./pages/SelectChild";
 import AddChild from "./pages/AddChild";
 import Vaccination from "./pages/Vaccination";
 import VaccinationDetail from "./pages/VaccinationDetail"; // 상세 페이지
-import MedicalHistory from "./pages/MedicalHistory";
+// import MedicalHistory from "./pages/MedicalHistory";
 import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
 import SynchronizationVaccination from "./pages/SynchronizationVaccination";
 
@@ -43,7 +46,7 @@ function App() {
               path="/dashboard/:childAddress/:id"
               element={<DashBoard />}
             />
-            <Route path="/survey/:childAddress/:id" element={<Survey />} />
+            {/* <Route path="/survey/:childAddress/:id" element={<Survey />} /> */}
             <Route path="/mypage/:childAddress/:id" element={<MyPage />} />
             <Route path="/etc/:childAddress/:id" element={<Etc />} />
             <Route
@@ -61,7 +64,20 @@ function App() {
             <Route
               path="/medicalHistory/details/:childAddress/:childID/:id"
               element={<MedicalHistoryDetail />}
+              />
+
+          
+
+            <Route path="/survey" element={<Survey />} />
+
+            <Route path="/surveyList/:id" element={<SurveyList />} />
+            <Route path="/surveyQuestion/:id" element={<SurveyQuestion />} />
+            <Route
+              path="/surveyResult/:childSurveyId"
+              element={<SurveyResult />}
             />
+            
+           
           </Routes>
         </Router>
       </RecoilRoot>
