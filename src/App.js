@@ -16,7 +16,7 @@ import SelectChild from "./pages/SelectChild";
 import AddChild from "./pages/AddChild";
 import Vaccination from "./pages/Vaccination";
 import VaccinationDetail from "./pages/VaccinationDetail"; // 상세 페이지
-// import MedicalHistory from "./pages/MedicalHistory";
+import MedicalHistory from "./pages/MedicalHistory";
 import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
 import SynchronizationVaccination from "./pages/SynchronizationVaccination";
 
@@ -68,7 +68,7 @@ function App() {
 
           
 
-            <Route path="/survey" element={<Survey />} />
+            <Route path="/survey/:childAddress/:id" element={<Survey />} />
 
             <Route path="/surveyList/:id" element={<SurveyList />} />
             <Route path="/surveyQuestion/:id" element={<SurveyQuestion />} />
