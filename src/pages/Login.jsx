@@ -5,29 +5,50 @@ import { useNavigate } from "react-router-dom";
 import { userAuth } from "../api/login";
 
 const Login = () => {
-  const { connectWallet, walletAddress } = useWallet();
+  const { connectWallet } = useWallet();
   const navigate = useNavigate();
 
   const onClickWallet = async () => {
-    const isConnected = await connectWallet();
-    if (isConnected) {
-      try {
-        const response = await userAuth.login({ address: walletAddress });
-        if (response.data.isSuccess) {
-          const { accessToken, refreshToken } = response.data.result;
+    try {
+      const { success, address } = await connectWallet();
 
-          localStorage.setItem("accessToken", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-
-          navigate("/selectChild");
-        } else {
-          console.log("로그인 실패: ", response.data.message);
-        }
-      } catch (error) {
-        console.error("로그인 요청 중 오류 발생: ", error);
+      if (!success) {
+        alert("메타마스크와 연결이 되지 않습니다.");
+        return;
       }
-    } else {
-      alert("메타마스크와 연결이 되지 않습니다.");
+
+      if (!address) {
+        alert("지갑 주소를 가져올 수 없습니다.");
+        return;
+      }
+
+      // 기존 토큰 제거
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+
+      const response = await userAuth.login({ address: address });
+
+      if (!response?.data?.isSuccess) {
+        throw new Error(response?.data?.message || "로그인에 실패했습니다.");
+      }
+
+      const { accessToken, refreshToken } = response.data.result;
+
+      if (!accessToken || !refreshToken) {
+        throw new Error("유효하지 않은 토큰입니다.");
+      }
+
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      navigate("/selectChild");
+    } catch (error) {
+      console.error("로그인 처리 중 오류가 발생했습니다:", error);
+      alert(error.message || "로그인 처리 중 오류가 발생했습니다.");
+
+      // 에러 발생 시 토큰 제거
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     }
   };
 

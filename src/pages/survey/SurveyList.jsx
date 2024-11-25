@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import styled from "styled-components";
 import SurveyIcon from "../../img/SurveyIcon.png";
@@ -7,6 +7,9 @@ import { getSurveyList } from "../../api/SurveyApi.jsx";
 
 const SurveyList = () => {
   const navigate = useNavigate();
+  const params = useParams();
+
+  const childId = params.id;
 
   const [activate, setActivate] = useState();
   const [surveyList, setSurveyList] = useState([]);
@@ -18,6 +21,7 @@ const SurveyList = () => {
     try {
       setLoading(true);
       const data = await getSurveyList();
+
       const guraData = [
         {
           surveyId: 5,
@@ -76,7 +80,8 @@ const SurveyList = () => {
                   key={survey.surveyId}
                   onClick={() => {
                     if (idx > 3) return;
-                    navigate("/surveyQuestion", {
+
+                    navigate(`/surveyQuestion/${childId}`, {
                       state: {
                         surveyId: survey.surveyId,
                         initialIdx: 0,

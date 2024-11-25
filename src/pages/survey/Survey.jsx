@@ -7,13 +7,13 @@ import { useEffect, useState } from "react";
 import { getChildSurveyList, getChildSurveyDetail } from "../../api/SurveyApi";
 import { child } from "../../api/child";
 
-const Survey = ({ accessToken }) => {
+const Survey = () => {
   const params = useParams();
-  accessToken = ``;
-  // const params = { childAddress: 1 };
-  // console.log(params);
   const navigate = useNavigate();
-
+  const childAddress = params.childAddress ? params.childAddress : "sumin_test";
+  const childId = params.id ? params.id : 12;
+  // console.log(childAddress, child);
+  // debugger;
   const [information, setInformation] = useState({
     name: "",
     age: "",
@@ -27,8 +27,7 @@ const Survey = ({ accessToken }) => {
     // Fetch child information
     const fetchChildData = async () => {
       try {
-        const response = await child.return(params.childId);
-        console.log(params.childId);
+        const response = await child.return(childId);
 
         if (response.data.isSuccess) {
           setInformation({
@@ -46,9 +45,9 @@ const Survey = ({ accessToken }) => {
     // Fetch survey list
     const fetchSurveys = async () => {
       try {
-        const surveys = await getChildSurveyList(params.childId, accessToken);
-        console.log("Surveys:", surveys); // 데이터를 확인
-        setSurveyList(surveys);
+        const data = await getChildSurveyList(childId);
+
+        setSurveyList(data.surveys);
       } catch (error) {
         console.error(
           "API 호출 중 오류 발생:",
@@ -59,24 +58,21 @@ const Survey = ({ accessToken }) => {
         );
       }
     };
-    if (params.childId) {
+    if (childId) {
       fetchChildData();
       fetchSurveys();
     }
-  }, [params.childId, accessToken]);
+  }, [childId]);
 
-  const handleSurveyClick = async (surveyId) => {
+  const handleSurveyClick = async (childSurveyId) => {
     try {
-      const surveyDetail = await getChildSurveyDetail(surveyId, accessToken);
-
-      console.log("Survey Detail:", surveyDetail);
-
-      navigate(`/surveyQuestion`, {
+      // 기검사내역들
+      navigate(`/SurveyResult/${childSurveyId}`, {
         state: {
-          surveyId: surveyId,
-          initialIdx: 0,
-          canEdit: false,
-          initialScores: new Array(40).fill(0),
+          childId: childId,
+          // initialIdx: 0,
+          // canEdit: false,
+          // initialScores: new Array(40).fill(0),
         },
       });
     } catch (error) {
@@ -86,19 +82,15 @@ const Survey = ({ accessToken }) => {
   };
 
   return (
-    <Layout
-      name={information.name}
-      age={information.age}
-      imgUrl={information.imgUrl}
-    >
+    <Layout childID={childId} childAddress={childAddress}>
       <S.Container>
         <h2>{information.name}의 검사지</h2>
         {errorMessage && <div>{errorMessage}</div>}
         <S.TestList>
-          {surveyList.map((survey) => (
+          {surveyList.map((survey, idx) => (
             <S.TestItem
-              key={survey.surveyId}
-              onClick={() => handleSurveyClick(survey.surveyId)}
+              key={idx}
+              onClick={() => handleSurveyClick(survey.childSurveyId)}
             >
               <div className="icon">
                 <img src={SurveyIcon} alt="Icon" />
@@ -111,7 +103,7 @@ const Survey = ({ accessToken }) => {
             </S.TestItem>
           ))}
         </S.TestList>
-        <S.SurveyButton onClick={() => navigate("/surveyList")}>
+        <S.SurveyButton onClick={() => navigate(`/surveyList/${childId}`)}>
           검사하기
         </S.SurveyButton>
       </S.Container>

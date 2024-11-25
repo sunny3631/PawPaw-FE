@@ -2,13 +2,15 @@ import axios from "axios";
 import { userAuth } from "../login";
 
 export const api = axios.create({
-  baseURL: "http://3.37.62.216/",
+  baseURL: "http://3.37.62.216",
 });
 
 // 서버로 요청을 보내기 전에 JWT 자동 추가
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    // const token = localStorage.getItem("accessToken");
+    const token =
+      "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiYXV0aCI6IlJPTEVfVVNFUiIsImV4cCI6MTczMjY4Nzg4OX0.vRnKXi_RnXrJK-1_ekxQp_EM_bSGB6rR_wNLIWtuJBM";
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

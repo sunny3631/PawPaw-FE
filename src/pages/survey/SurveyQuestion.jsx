@@ -9,38 +9,29 @@ import { postSurvey } from "../../api/SurveyApi.jsx";
 
 const SurveyQuestion = () => {
   const navigate = useNavigate(); // 함수 호출로 수정
-  const {
-    // state,
-    state = {
-      childId: 1,
-      surveyId: 1,
-      initialIdx: 0,
-      canEdit: true,
-      initialScores: new Array(40).fill(0), // 5 * 8
-    },
-  } = useLocation();
+  const { state } = useLocation();
   const params = useParams();
-
-  const [index, setIndex] = useState(state.initialIdx);
+  const childId = params.id;
+  const [index, setIndex] = useState(0);
   const [activate, setActivate] = useState();
   const [scores, setScores] = useState(state.initialScores);
   const [surveyQuestions, setSurveyQuestions] = useState();
 
   const scoreBoard = [3, 2, 1, 0];
 
-  // const surveyQuestions = SurveyText[state.idx] || [];
-
-  // 넘겨줘야할 것들
-  // 1. 기설문인지 여부
-  // 2. 기설문이라면 기답안들
-  // 3. 기설문이라면 현재 인덱스값
-
-  // mock test scores
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
         const data = await getSurveyDetail(state.surveyId);
-        setSurveyQuestions(data.questions);
+        const initialIdx = state.initialIdx;
+        const length = state.initialScores.length;
+
+        const slicedQuestions = data.questions.slice(
+          initialIdx,
+          initialIdx + length
+        );
+
+        setSurveyQuestions(slicedQuestions);
       } catch (error) {
         console.error("검사 목록 조회 실패:", error);
       }
@@ -56,20 +47,19 @@ const SurveyQuestion = () => {
   };
 
   const submitScores = async () => {
-    if (state.canEdit === false) return;
+    if (state.canEdit === false) {
+      navigate(-1);
+      return;
+    }
 
     try {
-      const data = await postSurvey(state.childId, state.surveyId, scores);
-      console.log(data);
+      const childSurveyId = await postSurvey(childId, state.surveyId, scores);
+      console.log(childSurveyId);
+      navigate(-1);
     } catch (error) {
       console.error("검사 목록 조회 실패:", error);
     }
-    navigate(-1);
   };
-
-  // if (!surveyQuestions) {
-  //   return <div>설문을 불러오는 중입니다...</div>;
-  // }
 
   return (
     <>
@@ -84,19 +74,16 @@ const SurveyQuestion = () => {
           </Instruction>
         </Information>
         <Content>
-          {surveyQuestions ? (
+          {surveyQuestions && (
             <>
               <QuestionText>{surveyQuestions[index].question}</QuestionText>
-
-              {surveyQuestions[index].imageUrl !== null ? (
+              {surveyQuestions[index].imageUrl && (
                 <img src={surveyQuestions[index].imageUrl} alt="img" />
-              ) : (
-                <></>
               )}
             </>
-          ) : (
-            <></>
           )}
+        </Content>
+        <FixedContainer>
           <ScoreBoard>
             {scoreBoard.map((el) => (
               <ScoreButton
@@ -120,7 +107,7 @@ const SurveyQuestion = () => {
             >
               이전
             </NavButton>
-            {index < 39 ? (
+            {index < state.initialScores.length - 1 ? (
               <NavButton onClick={() => setIndex((prev) => prev + 1)}>
                 다음
               </NavButton>
@@ -130,11 +117,11 @@ const SurveyQuestion = () => {
                   submitScores();
                 }}
               >
-                {"done"}
+                {"완료"}
               </NavButton>
             )}
           </NavigationButtons>
-        </Content>
+        </FixedContainer>
         <NavigationWrapper>
           <Navigation activate={activate} setActivate={setActivate} />
         </NavigationWrapper>
@@ -149,7 +136,7 @@ export default SurveyQuestion;
 const LayoutContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 150vh;
+  height: 855px;
   background-color: #ffeccf;
 `;
 
@@ -177,22 +164,41 @@ const Content = styled.div`
   overflow-y: auto;
   padding-top: 13px;
   padding-bottom: 60px;
+  text-align: center;
+
+  img {
+    max-width: 90%;
+    height: auto;
+    justify-content: center;
+    align-items: center;
+  }
 `;
 
 const QuestionText = styled.div`
   font-size: 23px;
   font-weight: semi-bold;
   text-shadow: 2px 2px 5px rgba(219, 139, 0, 0.3);
-  padding-top: 60px;
-  padding-bottom: 65px;
+  padding-top: 35px;
+  padding-bottom: 30px;
   text-align: center;
+`;
+
+const FixedContainer = styled.div`
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600px;
+  background-color: #ffeccf;
+  padding: 20px 0;
+  z-index: 10;
 `;
 
 const ScoreBoard = styled.div`
   display: flex;
   justify-content: space-around;
-  padding-top: 130px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 `;
 
 const ScoreButton = styled.button`
@@ -214,7 +220,6 @@ const ScoreButton = styled.button`
 const NavigationButtons = styled.div`
   display: flex;
   justify-content: space-between;
-  padding-top: 10px;
 `;
 
 const NavButton = styled.button`
@@ -255,15 +260,15 @@ const Information = styled.div`
 `;
 
 const Instruction = styled.div`
-  width: 100%; /* 부모 컨테이너의 크기에 맞춤 */
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   padding-top: 15px;
 
   img {
-    width: 350px; /* 이미지 너비 */
-    height: auto; /* 비율 유지 */
-    max-width: 100%; /* 부모 컨테이너에 맞게 크기 제한 */
+    width: 350px;
+    height: auto;
+    max-width: 100%;
   }
 `;

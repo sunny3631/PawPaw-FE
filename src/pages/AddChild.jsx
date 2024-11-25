@@ -1,5 +1,5 @@
 import { useState } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import Left from "../assets/image/leftBackground.svg";
 import Right from "../assets/image/rightBackground.svg";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,8 @@ import { child } from "../api/child/index.js";
 const AddChild = () => {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [slideDirection, setSlideDirection] = useState("next");
   const [information, setInformation] = useState({
     name: "",
     birthDate: "",
@@ -24,34 +25,93 @@ const AddChild = () => {
     weight: "",
   });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const steps = [
+    {
+      field: "name",
+      title: "아이의 이름을 알려주세요",
+      placeholder: "이름을 입력하세요",
+      validation: (value) => (!value ? "이름은 필수 입력 항목입니다." : null),
+    },
+    {
+      field: "birthDate",
+      title: "아이의 생년월일을 알려주세요",
+      placeholder: "생년월일 8자를 입력하세요. ex.20240101",
+      validation: (value) =>
+        !/^\d{8}$/.test(value) ? "생년월일은 8자리로 입력하세요." : null,
+      format: (value) => {
+        if (value.length === 8) {
+          return `${value.slice(0, 4)}년 ${value.slice(4, 6)}월 ${value.slice(
+            6,
+            8
+          )}일`;
+        }
+        return value;
+      },
+    },
+    {
+      field: "height",
+      title: "아이의 키를 알려주세요",
+      placeholder: "소수점 첫 번째 자리만 입력하세요. ex. 90.1",
+      validation: (value) =>
+        value && !/^\d{1,3}(\.\d)?$/.test(value)
+          ? "신장은 소수점 첫 번째 자리까지 입력하세요."
+          : null,
+      unit: "cm",
+    },
+    {
+      field: "weight",
+      title: "아이의 몸무게를 알려주세요",
+      placeholder: "소수점 첫 번째 자리만 입력하세요. ex. 10.5",
+      validation: (value) =>
+        value && !/^\d{1,2}(\.\d)?$/.test(value)
+          ? "체중은 소수점 첫 번째 자리까지 입력하세요."
+          : null,
+      unit: "kg",
+    },
+    {
+      field: "confirmation",
+      title: "입력하신 정보를 확인해주세요",
+      isConfirmation: true,
+    },
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setInformation((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const validate = () => {
-    const newErrors = {};
-
-    if (!information.name) newErrors.name = "이름은 필수 입력 항목입니다.";
-    if (!/^\d{8}$/.test(information.birthDate))
-      newErrors.birthDate = "생년월일은 8자리로 입력하세요.";
-    if (!/^\d{1,3}(\.\d)?$/.test(information.height))
-      newErrors.height = "신장은 소수점 첫 번째 자리까지 입력하세요.";
-    if (!/^\d{1,2}(\.\d)?$/.test(information.weight))
-      newErrors.weight = "체중은 소수점 첫 번째 자리까지 입력하세요.";
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const currentStepData = steps[currentStep];
+    const error = currentStepData.validation?.(value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const handleNext = () => {
-    if (validate()) {
-      setStep(2);
+    const currentStepData = steps[currentStep];
+    if (currentStepData.isConfirmation) {
+      setSlideDirection("next");
+      setCurrentStep(currentStep + 1);
+      return;
     }
+
+    const error = currentStepData.validation?.(
+      information[currentStepData.field]
+    );
+    if (error) {
+      setErrors((prev) => ({ ...prev, [currentStepData.field]: error }));
+      return;
+    }
+
+    setSlideDirection("next");
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  const handleBack = () => {
+    setSlideDirection("prev");
+    setCurrentStep((prev) => prev - 1);
   };
 
   const createChild = async () => {
+    setIsLoading(true);
     try {
       if (!window.ethereum) {
         throw Error("MetaMask not install");
@@ -60,6 +120,8 @@ const AddChild = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
+
+      const encrpytedName = encodeData(information.name, signer.address);
 
       const contract = new ethers.Contract(
         process.env.REACT_APP_PARENT_CHILD_RELATIONSHIP_ADDRESS,
@@ -75,7 +137,6 @@ const AddChild = () => {
           .then((network) => network.chainId),
         verifyingContract: contract.target,
       };
-
       const nonce = await contract.getNonce(signer.address);
 
       const types = {
@@ -91,7 +152,7 @@ const AddChild = () => {
 
       const message = {
         parent: signer.address,
-        name: information.name,
+        name: encrpytedName,
         birthDate: toUnixTimestamp(information.birthDate),
         height: formatInformation(information.height),
         weight: formatInformation(information.weight),
@@ -102,7 +163,7 @@ const AddChild = () => {
 
       const response = await metaTxAPI.post("/contract/create", {
         parent: signer.address,
-        childName: information.name,
+        childName: encrpytedName,
         birthDate: toUnixTimestamp(information.birthDate),
         height: formatInformation(information.height),
         weight: formatInformation(information.weight),
@@ -116,22 +177,35 @@ const AddChild = () => {
         );
         const childAddress = createChildEvent.args[1]; // CreateChild 이벤트의 두 번째 인자가 childAddress
 
+        console.log(childAddress);
+
         // 여기서 백엔드 연결하는 코드 작성
         try {
-          const backendResponse = await child.create({
+          const formatDateString = (dateStr) => {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            return `${year}-${month}-${day}`;
+          };
+
+          const backendData = {
             address: childAddress,
-            name: message.childName,
-            birthDate: message.birthDate,
-            height: message.height,
-            weight: message.weight,
-          });
+            name: encrpytedName, // 이미 암호화된 이름 사용
+            birthDate: formatDateString(information.birthDate),
+            height: parseFloat(information.height),
+            weight: parseFloat(information.weight),
+          };
+
+          const backendResponse = await child.create(backendData);
 
           if (backendResponse.data.isSuccess) {
+            setIsLoading(false);
             return { success: true, childAddress };
           } else {
             throw new Error("백엔드 API 호출 에러");
           }
         } catch (error) {
+          setIsLoading(false);
           console.error(error);
           return {
             success: false,
@@ -139,6 +213,7 @@ const AddChild = () => {
         }
       }
 
+      setIsLoading(false);
       return {
         success: false,
       };
@@ -152,191 +227,316 @@ const AddChild = () => {
 
   return (
     <Container>
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          position: "absolute", // absolute -> relative로 수정
-          top: 0,
-          height: "100px", // 원하는 높이 설정
-        }}
-      >
-        <img
-          style={{
-            height: "100%", // 높이를 div의 높이에 맞춤
-            objectFit: "cover", // 이미지가 부모 요소에 맞게 잘림 없이 맞춰짐
-          }}
-          src={Left}
-          alt=""
-        />
-        <img
-          style={{
-            height: "100%", // 높이를 div의 높이에 맞춤
-            objectFit: "cover",
-          }}
-          src={Right}
-          alt=""
-        />
-      </div>
-      <FormTitle>{step === 1 ? "아이 기본 정보" : "백신 동기화"}</FormTitle>
+      <BackgroundWrapper>
+        <img src={Left} alt="" />
+        <img src={Right} alt="" />
+      </BackgroundWrapper>
 
-      {step === 1 ? (
-        <>
-          <FormContainer>
-            <Label>*이름</Label>
-            <Input
-              name="name"
-              value={information.name}
-              onChange={handleChange}
-              placeholder="이름을 입력하세요"
-            />
-            {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
-          </FormContainer>
+      <FormWrapper>
+        {currentStep < steps.length - 1 ? (
+          <FormSection key={currentStep} slideDirection={slideDirection}>
+            <StepIndicator>
+              {steps.slice(0, -1).map((_, index) => (
+                <StepDot key={index} active={index === currentStep} />
+              ))}
+            </StepIndicator>
 
-          <FormContainer>
-            <Label>*생년월일</Label>
-            <Input
-              name="birthDate"
-              value={information.birthDate}
-              onChange={handleChange}
-              placeholder="생년월일 8자를 입력하세요. ex.20240101"
-            />
-            {errors.birthDate && (
-              <ErrorMessage>{errors.birthDate}</ErrorMessage>
+            <FormTitle>{steps[currentStep].title}</FormTitle>
+
+            {!steps[currentStep].isConfirmation ? (
+              <InputWrapper>
+                <StyledInput
+                  name={steps[currentStep].field}
+                  value={information[steps[currentStep].field]}
+                  onChange={handleChange}
+                  placeholder={steps[currentStep].placeholder}
+                  autoFocus
+                />
+                {steps[currentStep].unit && (
+                  <Unit>{steps[currentStep].unit}</Unit>
+                )}
+              </InputWrapper>
+            ) : (
+              <ConfirmationList>
+                {Object.entries(information).map(([key, value]) => (
+                  <ConfirmationItem key={key}>
+                    <ConfirmationLabel>
+                      {steps.find((s) => s.field === key)?.title}
+                    </ConfirmationLabel>
+                    <ConfirmationValue>
+                      {steps.find((s) => s.field === key)?.format?.(value) ||
+                        value}
+                      {steps.find((s) => s.field === key)?.unit}
+                    </ConfirmationValue>
+                  </ConfirmationItem>
+                ))}
+              </ConfirmationList>
             )}
-          </FormContainer>
 
-          <FormContainer>
-            <Label>신장</Label>
-            <Input
-              name="height"
-              value={information.height}
-              onChange={handleChange}
-              placeholder="소수점 첫 번째 자리만 입력하세요. ex. 90.1"
-            />
-            {errors.height && <ErrorMessage>{errors.height}</ErrorMessage>}
-          </FormContainer>
+            {errors[steps[currentStep].field] && (
+              <ErrorMessage>{errors[steps[currentStep].field]}</ErrorMessage>
+            )}
 
-          <FormContainer>
-            <Label>체중</Label>
-            <Input
-              name="weight"
-              value={information.weight}
-              onChange={handleChange}
-              placeholder="소수점 첫 번째 자리만 입력하세요. ex. 10.5"
-            />
-            {errors.weight && <ErrorMessage>{errors.weight}</ErrorMessage>}
-          </FormContainer>
-
-          <NextButton step={step} onClick={handleNext}>
-            다음
-          </NextButton>
-        </>
-      ) : (
-        <div>
-          <NextButton
-            onClick={async () => {
-              const isok = await createChild();
-              if (isok.success) {
-                navigate("/synchronizationVaccination", {
-                  state: {
-                    childAddress: isok.childAddress,
-                  },
-                });
-              } else {
-                alert("아이 등록에 실패하였습니다.");
-              }
-            }}
-          >
-            동기화 할래요.
-          </NextButton>
-          <NextButton
-            onClick={async () => {
-              const isok = await createChild();
-              if (isok.success) {
-                navigate("/selectChild");
-              } else {
-                alert("아이 등록에 실패하였습니다.");
-              }
-            }}
-          >
-            동기화 안할래요.
-          </NextButton>
-        </div>
-      )}
+            <ButtonGroup>
+              {currentStep > 0 && (
+                <BackButton onClick={handleBack}>이전</BackButton>
+              )}
+              <NextButton onClick={handleNext}>
+                {currentStep === steps.length - 2 ? "확인" : "다음"}
+              </NextButton>
+            </ButtonGroup>
+          </FormSection>
+        ) : (
+          <SyncSection slideDirection={slideDirection}>
+            <FormTitle>백신 정보를 동기화할까요?</FormTitle>
+            <SyncButtonGroup>
+              <SyncButton
+                onClick={async () => {
+                  const result = await createChild();
+                  if (result.success) {
+                    navigate("/synchronizationVaccination", {
+                      state: { childAddress: result.childAddress },
+                    });
+                  } else {
+                    alert("아이 등록에 실패하였습니다.");
+                  }
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "처리중..." : "동기화 할래요"}
+              </SyncButton>
+              <SyncButton
+                onClick={async () => {
+                  const result = await createChild();
+                  if (result.success) {
+                    navigate("/selectChild");
+                  } else {
+                    alert("아이 등록에 실패하였습니다.");
+                  }
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "처리중..." : "동기화 안할래요"}
+              </SyncButton>
+            </SyncButtonGroup>
+          </SyncSection>
+        )}
+      </FormWrapper>
     </Container>
   );
 };
 
+const slideInNext = keyframes`
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
+
+const slideInPrev = keyframes`
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+`;
+
+// Styled Components
 const Container = styled.div`
   background-color: #f9d49b;
   width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 20px;
   padding: 30px;
   justify-content: center;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+`;
+
+const BackgroundWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+
+  img {
+    height: 100px;
+    object-fit: cover;
+  }
+`;
+
+const FormWrapper = styled.div`
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+`;
+
+const FormSection = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  animation: ${({ slideDirection }) =>
+      slideDirection === "next" ? slideInNext : slideInPrev}
+    0.3s ease-out;
+`;
+
+const SyncSection = styled(FormSection)``;
+
+const StepIndicator = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+`;
+
+const StepDot = styled.div`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${({ active }) => (active ? "#4F2304" : "#FFE4B5")};
+  transition: background-color 0.3s ease;
 `;
 
 const FormTitle = styled.h2`
   font-family: KOTRAHOPE;
-  font-size: 36px;
-  font-weight: 400;
-  line-height: 41.94px;
-  text-align: left;
-`;
-
-const FormContainer = styled.div`
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  justify-content: center;
-  align-items: start;
-  gap: 10px;
-`;
-
-const Label = styled.label`
-  font-family: Arial, sans-serif;
-  font-size: 16px;
+  font-size: 28px;
   color: #4f2304;
+  text-align: center;
+  margin: 0 0 24px;
 `;
 
-const Input = styled.input`
+const InputWrapper = styled.div`
   width: 100%;
-  height: 40px;
-  border-radius: 8px;
+  position: relative;
+`;
+
+const StyledInput = styled.input`
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
   border: none;
-  padding: 0 10px;
+  border-radius: 12px;
   background-color: #ffeccf;
   font-size: 16px;
-  font-family: Arial, sans-serif;
-`;
-
-const NextButton = styled.button`
-  width: ${({ step }) => (step === 1 ? "108px" : "275px")};
-  height: ${({ step }) => (step === 1 ? "48px" : "60px")};
-  border-radius: ${({ step }) => (step === 1 ? "8px" : "30px")};
-  background-color: #fff7e4;
-  border: none;
   color: #4f2304;
-  margin-top: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: Inter;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 24px;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #4f2304;
+  }
+
+  &::placeholder {
+    color: #bfa78a;
+  }
 `;
 
-const ErrorMessage = styled.div`
-  color: red;
+const Unit = styled.span`
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #4f2304;
+`;
+
+const ErrorMessage = styled.p`
+  color: #ff4b4b;
   font-size: 14px;
-  margin-top: 5px;
+  margin: 8px 0 0;
+  text-align: left;
+  width: 100%;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+`;
+
+const BaseButton = styled.button`
+  height: 48px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const NextButton = styled(BaseButton)`
+  background-color: #fff7e4;
+  color: #4f2304;
+
+  &:hover:not(:disabled) {
+    background-color: #ffe4b5;
+  }
+`;
+
+const BackButton = styled(BaseButton)`
+  background-color: transparent;
+  color: #4f2304;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(79, 35, 4, 0.1);
+  }
+`;
+
+const SyncButtonGroup = styled(ButtonGroup)`
+  flex-direction: column;
+  width: 100%;
+`;
+
+const SyncButton = styled(BaseButton)`
+  width: 100%;
+  background-color: #fff7e4;
+  color: #4f2304;
+
+  &:hover:not(:disabled) {
+    background-color: #ffe4b5;
+  }
+`;
+
+const ConfirmationList = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const ConfirmationItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #ffeccf;
+  border-radius: 12px;
+`;
+
+const ConfirmationLabel = styled.span`
+  color: #4f2304;
+  font-size: 14px;
+`;
+
+const ConfirmationValue = styled.span`
+  color: #4f2304;
+  font-weight: 600;
 `;
 
 export default AddChild;

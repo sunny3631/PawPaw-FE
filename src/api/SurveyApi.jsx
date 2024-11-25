@@ -4,7 +4,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://3.37.62.216",
   headers: {
-    Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiYXV0aCI6IlJPTEVfVVNFUiIsImV4cCI6MTczMjU0NDcxMX0.ZH_9NZe8f22D9oM7pabCCKCbvG_Hy6lJ23iGx7wTXFY`,
+    Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiYXV0aCI6IlJPTEVfVVNFUiIsImV4cCI6MTczMjU4OTMxMH0.XEGssc-J_vWYBa4m5QO4F47x60gxz47gP0eZOKpip1M`,
   },
 });
 
@@ -88,13 +88,19 @@ const getCategoryResponse = async (childSurveyId, categoryCode) => {
 //문진표 검사 등록
 const postSurvey = async (childId, surveyId, data) => {
   try {
+    const requestData = {
+      surveyResponses: data,
+    };
+    console.log(requestData);
+
     const response = await api.post(
       `/api/children/${childId}/surveys/${surveyId}`,
-      data
+      requestData
     );
 
     if (response.data.isSuccess) {
       return response.data.result;
+      debugger;
     } else {
       throw new Error(
         response.data.message || "설문 데이터를 저장할 수 없습니다."

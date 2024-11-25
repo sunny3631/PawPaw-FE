@@ -12,7 +12,11 @@ export const child = {
     return response;
   },
 
-  returns: async () => {},
+  returns: async () => {
+    const response = await api.get("/api/children");
+
+    return response;
+  },
 
   return: async (childAddress) => {
     const response = await api.get(`/api/children/${childAddress}`);
@@ -20,13 +24,13 @@ export const child = {
     return response;
   },
 
-  update: async (body) => {
-    const response = await api.put(`/api/children/${body.address}`, {
+  update: async (id, body) => {
+    const response = await api.put(`/api/children/${id}`, {
       name: body.name,
       birthDate: body.birthDate,
       height: body.height,
       weight: body.weight,
-      profile: body.profileImageURL,
+      profile: body.profile,
     });
 
     return response;
