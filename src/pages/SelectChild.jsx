@@ -29,6 +29,7 @@ const SelectChild = () => {
     );
 
     const childrenData = await contract.returnChildInformation();
+    console.log(childrenData);
 
     const decryptedChildren = await Promise.all(
       childrenData.map(async (child) => {
