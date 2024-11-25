@@ -158,6 +158,8 @@ const AddChild = () => {
         weight: formatInformation(information.weight),
         nonce,
       };
+      
+      console.log("Message Object: ", message);
 
       const signature = await signer.signTypedData(domain, types, message);
 

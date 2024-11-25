@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const metaTxAPI = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://3.107.188.94",
   headers: {
     "Content-Type": "application/json",
   },

@@ -503,6 +503,7 @@ const MedicalHistory = () => {
   }, []);
 
   const handleSave = useCallback(async () => {
+    console.log("Form Data:", formData); // formData 출력
     try {
       if (!validateForm(formData, activeTab)) {
         alert("모든 항목을 입력해야 합니다.");
@@ -571,6 +572,7 @@ const MedicalHistory = () => {
         diagnosisDetails: encrpytedDiagnosis,
         nonce: nonce,
       };
+      console.log("message :", message);
 
       const signature = await signer.signTypedData(domain, types, message);
 
