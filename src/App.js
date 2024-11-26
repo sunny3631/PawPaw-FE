@@ -19,6 +19,8 @@ import VaccinationDetail from "./pages/VaccinationDetail"; // 상세 페이지
 import MedicalHistory from "./pages/MedicalHistory";
 import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
 import SynchronizationVaccination from "./pages/SynchronizationVaccination";
+import Play from './pages/Play'
+import PlayDetail from "./pages/PlayDetail";
 
 function App() {
   return (
@@ -77,6 +79,9 @@ function App() {
               element={<SurveyResult />}
             />
             
+            <Route path="/play" element={<Play />} />
+            <Route path="/playdetail/:id" element={<PlayDetail />} />
+
            
           </Routes>
         </Router>
