@@ -1,12 +1,12 @@
-// import { api } from "./instance/userInstance";
+import { api } from "./instance/userInstance";
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://3.37.62.216",
-  headers: {
-    Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiYXV0aCI6IlJPTEVfVVNFUiIsImV4cCI6MTczMjU4OTMxMH0.XEGssc-J_vWYBa4m5QO4F47x60gxz47gP0eZOKpip1M`,
-  },
-});
+// const api = axios.create({
+//   baseURL: "http://3.37.62.216",
+//   headers: {
+//     Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiYXV0aCI6IlJPTEVfVVNFUiIsImV4cCI6MTczMjU4OTMxMH0.XEGssc-J_vWYBa4m5QO4F47x60gxz47gP0eZOKpip1M`,
+//   },
+// });
 
 //문진표 검사지 목록 조회
 const getSurveyList = async () => {
