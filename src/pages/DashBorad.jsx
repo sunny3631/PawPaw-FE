@@ -120,8 +120,8 @@ const DashBoard = () => {
       img: Treatment,
     },
     {
-      name: "건강 정보\n확인하기",
-      router: "",
+      name: "분석 결과\n확인하기",
+      router: `/analysis/${params.childAddress}/${params.id}`,
       img: QuestionMark,
     },
   ];

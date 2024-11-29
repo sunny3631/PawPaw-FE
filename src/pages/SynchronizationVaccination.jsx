@@ -8,7 +8,7 @@ import Left from "../assets/image/leftBackground.svg";
 import Right from "../assets/image/rightBackground.svg";
 import { ethers } from "ethers";
 import abi from "../abi/ParentChildRelationshipWithMeta.json";
-import axios from "axios";
+import { metaTxAPI } from "../api/instance/metaTransactionInstance";
 
 const RoundedBox = ({ onClick, label, vaccineInfo }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -199,19 +199,13 @@ const SynchronizationVaccination = () => {
 
   // 백신 정보 업데이트 진행
   const [vaccinations, setVaccinations] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const childAddress = params.childAddress;
 
   const cleanVaccineName = (name) => {
     return name.replace(/\s*-\s*\([12]\)$/, "");
   };
-
-  const api = axios.create({
-    baseURL: "http://localhost:8080",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 
   // 이거 이렇게 하는게 아니라 맞지 않은 백신에 대한 정보를 가져와야 합니다.
   const vaccineList = [
@@ -294,12 +288,16 @@ const SynchronizationVaccination = () => {
 
       const signature = await signer.signTypedData(domain, types, messages);
 
-      const response = await api.post("/contract//vaccination/updateMulti", {
-        parent: signer.address,
-        childAddress: childAddress,
-        vaccinations: vaccinations,
-        signature,
-      });
+      setIsLoading(true);
+      const response = await metaTxAPI.post(
+        "/contract/vaccination/updateMulti",
+        {
+          parent: signer.address,
+          childAddress: childAddress,
+          vaccinations: vaccinations,
+          signature,
+        }
+      );
 
       if (response.data.success) {
         console.log("tx hash: ", response.data.data.transactionHash);
@@ -310,6 +308,8 @@ const SynchronizationVaccination = () => {
     } catch (error) {
       console.log(error);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -356,11 +356,15 @@ const SynchronizationVaccination = () => {
       </VaccineList>
       <NextButton
         onClick={async () => {
-          await synchronizationVaccinations();
-          navigate(`/dashboard/${params.childAddress}`);
+          if (!isLoading) {
+            const success = await synchronizationVaccinations();
+            if (success) {
+              navigate("/selectChild");
+            }
+          }
         }}
       >
-        해당사항 체크완료
+        {isLoading ? "동기화 중..." : "체크완료"}
       </NextButton>
     </Container>
   );
