@@ -19,6 +19,7 @@ import VaccinationDetail from "./pages/VaccinationDetail"; // 상세 페이지
 import MedicalHistory from "./pages/MedicalHistory";
 import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
 import SynchronizationVaccination from "./pages/SynchronizationVaccination";
+import Analysis from "./pages/Analysis";
 
 function App() {
   return (
@@ -64,9 +65,11 @@ function App() {
             <Route
               path="/medicalHistory/details/:childAddress/:childID/:id"
               element={<MedicalHistoryDetail />}
-              />
-
-          
+            />
+            <Route
+              path="/analysis/:childAddress/:childID"
+              element={<Analysis />}
+            />
 
             <Route path="/survey/:childAddress/:id" element={<Survey />} />
 
@@ -76,8 +79,6 @@ function App() {
               path="/surveyResult/:childSurveyId"
               element={<SurveyResult />}
             />
-            
-           
           </Routes>
         </Router>
       </RecoilRoot>

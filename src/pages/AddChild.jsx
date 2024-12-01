@@ -158,7 +158,7 @@ const AddChild = () => {
         weight: formatInformation(information.weight),
         nonce,
       };
-      
+
       console.log("Message Object: ", message);
 
       const signature = await signer.signTypedData(domain, types, message);
@@ -296,9 +296,12 @@ const AddChild = () => {
                 onClick={async () => {
                   const result = await createChild();
                   if (result.success) {
-                    navigate("/synchronizationVaccination", {
-                      state: { childAddress: result.childAddress },
-                    });
+                    navigate(
+                      `/synchronization/vaccine/${result.childAddress}"`,
+                      {
+                        state: { childAddress: result.childAddress },
+                      }
+                    );
                   } else {
                     alert("아이 등록에 실패하였습니다.");
                   }
