@@ -100,7 +100,6 @@ const postSurvey = async (childId, surveyId, data) => {
 
     if (response.data.isSuccess) {
       return response.data.result;
-      debugger;
     } else {
       throw new Error(
         response.data.message || "설문 데이터를 저장할 수 없습니다."
@@ -127,6 +126,20 @@ const getChildHealth = async (childId) => {
   }
 };
 
+// 정보 가져오기
+const getSurveyAllResult = async (serveyID) => {
+  try {
+    const { data } = await api.get(`/api/children/${serveyID}/averages`);
+    if (data.isSuccess) {
+      return data.result;
+    } else {
+      throw new Error(data.message || "서비스가 준비중입니다.");
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 export {
   getSurveyList,
   getSurveyDetail,
@@ -135,4 +148,5 @@ export {
   getCategoryResponse,
   postSurvey,
   getChildHealth,
+  getSurveyAllResult,
 };

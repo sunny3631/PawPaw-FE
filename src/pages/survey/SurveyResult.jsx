@@ -1,7 +1,21 @@
 import { useEffect, useState } from "react";
-import { getCategoryResponse, getChildSurveyDetail } from "../../api/SurveyApi";
+import {
+  getCategoryResponse,
+  getChildSurveyDetail,
+  getSurveyAllResult,
+} from "../../api/SurveyApi";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 
 const SurveyResult = () => {
   const navigate = useNavigate();
@@ -17,6 +31,9 @@ const SurveyResult = () => {
 
     scores: [],
   });
+
+  const [analysisData, setAnalysisData] = useState([]);
+
   const params = useParams();
   const childId = state.childId;
 
@@ -27,6 +44,17 @@ const SurveyResult = () => {
       try {
         const data = await getChildSurveyDetail(childSurveyId);
         setSurveyResult(data);
+
+        const analysisResult = await getSurveyAllResult(childSurveyId);
+
+        // averageScore를 소수점 3자리로 반올림하여 number 타입으로 저장
+        const processedAreas = analysisResult.areas.map((area) => ({
+          ...area,
+          averageScore: Number(area.averageScore.toFixed(3)),
+        }));
+
+        setAnalysisData(processedAreas);
+        console.log(processedAreas);
       } catch (error) {
         console.error("검사 결과 조회 실패:", error);
       }
@@ -52,6 +80,7 @@ const SurveyResult = () => {
       },
     });
   };
+
   return (
     <>
       <LayoutContainer>
@@ -67,24 +96,96 @@ const SurveyResult = () => {
               {surveyResult.ageAtSurvey.days}일
             </div>
           </InfoBox>
-          <SurveyScoreContainer>
-            <SurveyHeader>
-              <div>항목</div>
-              <div>점수</div>
-              <div className="cutoff">최저 평균 최고</div>
-            </SurveyHeader>
-            {surveyResult.scores.map((el, idx) => (
-              <SurveyRow key={idx} onClick={() => handleResultClick(idx)}>
-                <Category>{el.category}</Category>
-                <Score>{el.score}점</Score>
-                <CutoffScores>
-                  <div>{el.cutoffScores.low}</div>
-                  <div>{el.cutoffScores.medium}</div>
-                  <div>{el.cutoffScores.high}</div>
-                </CutoffScores>
-              </SurveyRow>
-            ))}
-          </SurveyScoreContainer>
+
+          <Container>
+            <SectionContainer>
+              <Title>아동 발달 평가 차트</Title>
+              <ChartSection>
+                <ResponsiveContainer width="100%" height={400}>
+                  <RadarChart data={analysisData}>
+                    <PolarGrid gridType="polygon" />
+                    <PolarAngleAxis
+                      dataKey="category"
+                      tick={{
+                        fill: "#374151",
+                        fontSize: "14px",
+                      }}
+                      tickFormatter={(value, index) => {
+                        // 각 위치별로 줄바꿈 추가
+                        if (value === "소근육운동") return "소근육";
+                        if (value === "대근육운동") return "대근육";
+                        return value;
+                      }}
+                      dy={4} // 약간의 여백 추가
+                    />
+                    <PolarRadiusAxis
+                      angle={90}
+                      domain={[0, 24]} // 최대값을 24로 설정
+                      tick={{ fontSize: "12px" }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "10px",
+                      }}
+                      formatter={(value, name) => [
+                        `${value.toFixed(1)}점`,
+                        name === "childScore" ? "아동 점수" : "전체 평균",
+                      ]}
+                      labelFormatter={(label) => label} // category 이름
+                    />
+                    <Radar
+                      name="아동 점수"
+                      dataKey="childScore"
+                      stroke="#FFA5A5"
+                      fill="#FFA5A5"
+                      fillOpacity={0.5}
+                    />
+                    <Radar
+                      name="전체 평균"
+                      dataKey="averageScore"
+                      stroke="#A5B6FF"
+                      fill="#A5B6FF"
+                      fillOpacity={0.5}
+                    />
+                    <Legend
+                      wrapperStyle={{
+                        fontFamily: "'Noto Sans KR', sans-serif",
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </ChartSection>
+            </SectionContainer>
+
+            <SectionContainer>
+              <Title>분석 결과</Title>
+              <AnalysisSection>
+                <ScoreList>
+                  {analysisData.map((item) => {
+                    const difference = (
+                      item.childScore - Number(item.averageScore.toFixed(3))
+                    ).toFixed(2);
+                    const isPositive = difference > 0;
+                    return (
+                      <ScoreItem key={item.category}>
+                        <AreaName>{item.category}</AreaName>
+                        <ScoreInfo>
+                          <Scores>{item.childScore.toFixed(1)}점</Scores>
+                          <Difference $isPositive={isPositive}>
+                            {isPositive ? "+" : ""}
+                            {difference}
+                          </Difference>
+                        </ScoreInfo>
+                      </ScoreItem>
+                    );
+                  })}
+                </ScoreList>
+              </AnalysisSection>
+            </SectionContainer>
+          </Container>
         </Content>
       </LayoutContainer>
     </>
@@ -96,7 +197,7 @@ export default SurveyResult;
 const LayoutContainer = styled.div`
   display: flex;
   flex-direction: column;
-  height: 150vh;
+  height: 100vh;
   background-color: #ffeccf;
 `;
 
@@ -123,7 +224,6 @@ const Content = styled.div`
   flex: 1;
   overflow-y: auto;
   padding-top: 13px;
-  padding-bottom: 60px;
 
   .text {
     align-items: center;
@@ -215,4 +315,85 @@ const SurveyRow = styled.div`
     background-color: #c8e6c9; /* hover 효과 */
     cursor: pointer;
   }
+`;
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 32rem;
+  padding: 30px;
+  margin: 0 auto;
+`;
+
+const SectionContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 1rem;
+`;
+
+const Title = styled.span`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  padding-left: 0.25rem;
+`;
+
+const ChartSection = styled.div`
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const AnalysisSection = styled.div`
+  background-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  padding: 1.25rem;
+`;
+
+const ScoreList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const ScoreItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const AreaName = styled.span`
+  font-weight: 500;
+  color: #374151;
+`;
+
+const ScoreInfo = styled.div`
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+`;
+
+const Scores = styled.span`
+  font-weight: 500;
+  color: #374151;
+`;
+
+const Difference = styled.span`
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: right;
+  color: ${(props) => (props.$isPositive ? "#059669" : "#DC2626")};
 `;

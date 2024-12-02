@@ -236,6 +236,8 @@ const MoreButton = styled.button`
     background: #ffe4bd;
     transform: translateY(-2px);
   }
+
+  margin-bottom: 10px;
 `;
 
 const EmptyCard = styled.div`
