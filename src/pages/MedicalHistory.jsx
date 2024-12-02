@@ -369,6 +369,7 @@ const MedicalHistory = () => {
   const [sortOrder, setSortOrder] = useState("최신순");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaveLoading, setIsSaveLoading] = useState(false);
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -588,6 +589,7 @@ const MedicalHistory = () => {
 
       const signature = await signer.signTypedData(domain, types, message);
 
+      setIsSaveLoading(true);
       await metaTxAPI.post("/contract/medical/add", {
         parent: signer.address,
         childAddress: params.childAddress,
@@ -606,6 +608,8 @@ const MedicalHistory = () => {
     } catch (error) {
       console.error("Error saving medical history:", error);
       alert("저장 중 오류가 발생했습니다.");
+    } finally {
+      setIsSaveLoading(false);
     }
   }, [formData, activeTab, validateForm, initialFormData, params.childAddress]);
 
@@ -754,7 +758,7 @@ const MedicalHistory = () => {
               await handleSave();
             }}
           >
-            저장하기
+            {isSaveLoading ? "처리 중입니다." : "저장하기"}
           </SubmitButton>
         </Form>
       </AddModal>

@@ -66,10 +66,7 @@ function App() {
             <Route
               path="/medicalHistory/details/:childAddress/:childID/:id"
               element={<MedicalHistoryDetail />}
-              />
-
-          
-
+            />
             <Route path="/survey/:childAddress/:id" element={<Survey />} />
 
             <Route path="/surveyList/:id" element={<SurveyList />} />
