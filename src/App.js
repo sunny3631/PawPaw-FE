@@ -21,6 +21,7 @@ import MedicalHistoryDetail from "./pages/MedicalHistoryDetail";
 import SynchronizationVaccination from "./pages/SynchronizationVaccination";
 import Play from './pages/Play'
 import PlayDetail from "./pages/PlayDetail";
+import PlayList from "./pages/PlayList"
 
 function App() {
   return (
@@ -76,8 +77,10 @@ function App() {
               element={<SurveyResult />}
             />
             
-            <Route path="/play" element={<Play />} />
-            <Route path="/playdetail/:id" element={<PlayDetail />} />
+            <Route path="/play/:childAddress/:id" element={<Play />} />
+            <Route path="/playlist/:childAddress/:id" element={<PlayList />} />
+
+            <Route path="/playdetail/:gameId" element={<PlayDetail />} />
 
            
           </Routes>
