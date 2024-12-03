@@ -119,6 +119,11 @@ const DashBoard = () => {
       router: `/survey/${params.childAddress}/${params.id}`,
       img: Treatment,
     },
+    {
+      name: "놀이 추천\n 받으러가기",
+      router: `/play/${params.childAddress}/${params.id}`,
+      img: QuestionMark,
+    },
   ];
 
   const calculateVaccineStatus = (birthDate, minDay, maxDay) => {
@@ -281,12 +286,12 @@ const GridContainer = styled.div`
   margin-top: 10px;
 
   /* 세 번째 아이템을 위한 스타일 */
-  & > div:nth-child(3) {
+  /* & > div:nth-child(3) {
     grid-column: 1 / span 2; // 두 열을 모두 차지
     width: 100%; // 너비를 50%로
     margin: 0 auto; // 중앙 정렬
     justify-self: center; // 그리드 셀 내에서 중앙 정렬
-  }
+  } */
 `;
 
 // 각 메뉴 아이템을 위한 스타일
