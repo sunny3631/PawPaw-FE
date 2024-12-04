@@ -27,7 +27,7 @@ const Layout = ({ children, type = "not", childAddress, childID }) => {
 };
 
 const LayoutContainer = styled.div`
-  background-color: #ffeccf;
+  background-color: #FFECCF;
   height: 100vh;
   display: flex;
   flex-direction: column;

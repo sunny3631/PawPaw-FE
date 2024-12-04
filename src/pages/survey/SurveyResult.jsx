@@ -130,11 +130,15 @@ const SurveyResult = () => {
                         borderRadius: "8px",
                         padding: "10px",
                       }}
-                      formatter={(value, name) => [
-                        `${value.toFixed(1)}점`,
-                        name === "childScore" ? "아동 점수" : "전체 평균",
-                      ]}
-                      labelFormatter={(label) => label} // category 이름
+                      formatter={(value, name) => {
+                        if (name === "childScore") {
+                          return [`${value.toFixed(1)}점`, "아동 점수"]; // 아동 점수
+                        } else if (name === "averageScore") {
+                          return [`${value.toFixed(1)}점`, "전체 평균"]; // 전체 평균
+                        }
+                        return [`${value.toFixed(1)}점`, name];
+                      }}
+                      labelFormatter={(label) => label}
                     />
                     <Radar
                       name="아동 점수"

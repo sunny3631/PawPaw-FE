@@ -25,8 +25,8 @@ const Grid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 50px;
   margin-bottom: 20px;
-  margin-left : 20px;
-  margin-right : 20px;
+  margin-left : 30px;
+  margin-right : 30px;
 `;
 
 const Item = styled.div`

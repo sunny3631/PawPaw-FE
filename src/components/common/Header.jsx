@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { child } from "../../api/child";
+import Headerwave from '../../assets/header.svg';
 
 const Header = ({ childID }) => {
   const [information, setInformation] = useState({
@@ -40,6 +41,7 @@ const Header = ({ childID }) => {
   };
 
   return (
+    <Container>
     <HeaderContainer>
       <Title>PAWPAW</Title>
       <ProfileContainer>
@@ -57,24 +59,36 @@ const Header = ({ childID }) => {
         </InformationContainer>
       </ProfileContainer>
     </HeaderContainer>
+    <Wave
+    src = {Headerwave}></Wave>
+    </Container>
   );
 };
 
+const Container = styled.div`
+`
+const Wave = styled.img`
+width : 100%;
+`
 const HeaderContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 160px;
-  background-color: #f9d49b;
+  height: 100px;
+  background-color: #F9D49B;
   justify-content: space-between;
   padding: 20px; /* 패딩으로 내부 여백 설정 */
   gap: 10px;
   position: relative;
 
-  border-radius: 0 0 20px 20px;
-  box-shadow: 0 4px 15px rgba(79, 35, 4, 0.1);
+  /* border-radius: 0 0 20px 20px;
+  box-shadow: 0 4px 15px rgba(79, 35, 4, 0.1); */
 
-  // 선택사항: 배경에 미묘한 그라데이션 효과를 주어 더 입체감 있게 표현
+  /* // 선택사항: 배경에 미묘한 그라데이션 효과를 주어 더 입체감 있게 표현
+  background: linear-gradient(
+    to bottom,
+    #f9d49b 0%,
+    #f9d49b 85%,// 선택사항: 배경에 미묘한 그라데이션 효과를 주어 더 입체감 있게 표현
   background: linear-gradient(
     to bottom,
     #f9d49b 0%,
@@ -92,6 +106,19 @@ const HeaderContainer = styled.div`
     height: 1px;
     background: rgba(255, 255, 255, 0.3);
   }
+    rgba(249, 212, 155, 0.95) 100%
+  );
+
+  // 선택사항: 내부 상단에 미묘한 하이라이트 효과
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.3);
+  } */
 `;
 
 const Title = styled.span`

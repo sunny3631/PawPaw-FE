@@ -125,7 +125,7 @@ const CardGrid = styled.div`
 `;
 
 const HistoryCard = styled.div`
-  background: #ffeccf;
+  background: #C8DBBE;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(159, 135, 114, 0.15);

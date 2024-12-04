@@ -296,7 +296,7 @@ const GridContainer = styled.div`
 
 // 각 메뉴 아이템을 위한 스타일
 const MenuItem = styled.div`
-  background-color: rgba(255, 255, 255, 0.3);
+  background: rgba(219, 222, 230, 0.80);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -308,7 +308,7 @@ const MenuItem = styled.div`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(210, 165, 125, 0.25);
-    background: linear-gradient(135deg, #ffe7cc 0%, #ffd8a9 100%);
+    background: #DBDEE6;
   }
 
   &:active {
@@ -385,7 +385,7 @@ const VaccineScrollContainer = styled.div`
 const VaccineCard = styled.div`
   min-width: calc(100% - 40px);
   scroll-snap-align: center;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(159, 135, 114, 0.90);
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(159, 135, 114, 0.15);
   padding: 20px;
